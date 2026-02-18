@@ -4,50 +4,66 @@ import useAuthStore from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, Redirect } from "expo-router";
-import { Image, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useResolveClassNames } from "uniwind";
 
 export default function Index() {
   const { isAuthenticated, isHydrated } = useAuthStore();
-  const styles = useResolveClassNames(`flex-grow items-center justify-center px-6 ${Platform.OS === 'web' ? 'py-6' : ''}`);
+  const styles = useResolveClassNames(
+    `flex-grow items-center justify-center px-6 ${Platform.OS === "web" ? "py-6" : ""}`,
+  );
 
   if (!isHydrated) return null;
   if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login-signup" />;
+    return <Redirect href="/(auth)/login" />;
   }
 
   return (
     <SafeAreaView className="flex-1 bg-[#F4F7FF] overflow-hidden">
-      <ScrollView className="flex-1" contentContainerStyle={styles} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={styles}
+        showsVerticalScrollIndicator={false}
+      >
         <View className="flex-row items-center justify-between mb-8 gap-3 w-full ">
           <View className="flex-row flex-1 items-center gap-1">
             {/* Top icon */}
-          <View className="w-16 h-16 rounded-2xl bg-[#6C4CFF] items-center justify-center shrink-0 shadow-lg overflow-hidden">
-            <Image
-              source={require('../assets/images/logo.png')}
-              className="w-12 h-12"
-              resizeMode="contain"
-            />
-          </View>
+            <View className="w-16 h-16 rounded-2xl bg-[#6C4CFF] items-center justify-center shrink-0 shadow-lg overflow-hidden">
+              <Image
+                source={require("../assets/images/logo.png")}
+                className="w-12 h-12"
+                resizeMode="contain"
+              />
+            </View>
 
-          {/* Title */}
-          <View className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-[#121826]">
-              Learning Hub
-            </Text>
-            <Text className="text-base text-[#6B7280]">
-              Explore & Discover
-            </Text>
-          </View>
-
+            {/* Title */}
+            <View className="flex-1 items-center">
+              <Text className="text-2xl font-bold text-[#121826]">
+                Learning Hub
+              </Text>
+              <Text className="text-base text-[#6B7280]">
+                Explore & Discover
+              </Text>
+            </View>
           </View>
           {/* Profile Button */}
           <View className="w-12 h-12 shrink-0 rounded-full bg-white items-center justify-center shadow-md border border-gray-100">
             <Link href="/profile" asChild>
-            <TouchableOpacity className="w-12 h-12 rounded-full bg-white items-center justify-center shadow-md border border-gray-100">
-              <Ionicons name="person-circle-outline" size={28} color="#6C4CFF" />
-            </TouchableOpacity>
-          </Link>
+              <TouchableOpacity className="w-12 h-12 rounded-full bg-white items-center justify-center shadow-md border border-gray-100">
+                <Ionicons
+                  name="person-circle-outline"
+                  size={28}
+                  color="#6C4CFF"
+                />
+              </TouchableOpacity>
+            </Link>
           </View>
         </View>
 
@@ -75,7 +91,12 @@ export default function Index() {
         <View className="w-full flex-row flex-wrap justify-between mb-6">
           <Link href="/(tabs)/ar" asChild>
             <TouchableOpacity className="w-[48%] rounded-2xl bg-[#11C5A5] px-4 py-5 mb-4 shadow-md items-center">
-              <Ionicons name="glasses" size={32} color="white" className="mb-2" />
+              <Ionicons
+                name="glasses"
+                size={32}
+                color="white"
+                className="mb-2"
+              />
               <Text className="text-base font-semibold text-white text-center">
                 Augmented Reality
               </Text>
@@ -93,7 +114,12 @@ export default function Index() {
 
           <Link href="/(tabs)/games" asChild>
             <TouchableOpacity className="w-[48%] rounded-2xl bg-[#FFB020] px-4 py-5 mb-4 shadow-md items-center">
-              <Ionicons name="game-controller" size={32} color="white" className="mb-2" />
+              <Ionicons
+                name="game-controller"
+                size={32}
+                color="white"
+                className="mb-2"
+              />
               <Text className="text-base font-semibold text-white text-center">
                 Games
               </Text>
