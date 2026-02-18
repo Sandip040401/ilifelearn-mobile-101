@@ -16,11 +16,12 @@ export default function Books() {
         >
           <View className="flex-row items-center">
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={() => router.push("/")} // ← Go to root home
               className="w-10 h-10 bg-white/20 rounded-xl items-center justify-center mr-3"
             >
               <Ionicons name="arrow-back" size={20} color="white" />
             </TouchableOpacity>
+
             <View className="flex-1">
               <View className="flex-row items-center">
                 <Text className="text-xl font-bold text-white mr-2">
