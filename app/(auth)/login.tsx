@@ -104,7 +104,7 @@ export default function Login() {
               <Text className="text-[#121826] font-semibold mb-3 ml-1 text-base">
                 Password
               </Text>
-              <View className="flex-row items-center bg-white rounded-2xl border border-gray-200 px-5 py-4">
+              <View className="flex-row items-center bg-white rounded-2xl border border-gray-200 px-5 py-1">
                 <TextInput
                   className="flex-1 text-[#121826] text-base"
                   placeholder="Enter your password"
@@ -144,9 +144,9 @@ export default function Login() {
                 colors={["#6C4CFF", "#9B5CFF"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="py-5 rounded-2xl items-center shadow-xl shadow-[#6C4CFF]/40"
+                className="py-5 rounded-2xl overflow-hidden items-center shadow-xl shadow-[#6C4CFF]/40"
               >
-                <Text className="text-white font-bold text-lg tracking-wide">
+                <Text className="text-white  font-bold text-lg tracking-wide">
                   {isLoading ? "Signing In..." : "Log In"}
                 </Text>
               </LinearGradient>
