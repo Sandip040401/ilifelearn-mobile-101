@@ -1,7 +1,17 @@
+import useAuthStore from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+
 
 export default function TabLayout() {
+  const { isAuthenticated, isHydrated} = useAuthStore();
+
+  if (!isHydrated) return null;
+  
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/login-signup" />;
+  }
+  
   return (
     <Tabs
       screenOptions={{
