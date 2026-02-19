@@ -1,3 +1,4 @@
+// Login.tsx - Replace entire component
 import SafeAreaView from "@/components/SafeAreaView";
 import useAuthStore from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -5,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+    Dimensions,
     Image,
     KeyboardAvoidingView,
     Platform,
@@ -14,7 +16,10 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { useResolveClassNames } from "uniwind";
+
+const { width: screenWidth } = Dimensions.get("window");
+const scale = Math.min(screenWidth / 375, 1);
+const buttonRadius = 20 * scale;
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -24,7 +29,6 @@ export default function Login() {
 
   const router = useRouter();
   const { login } = useAuthStore();
-  const styles = useResolveClassNames("flex-1");
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -34,7 +38,6 @@ export default function Login() {
 
     setIsLoading(true);
 
-    // Simulate API call
     setTimeout(() => {
       const mockUser = {
         id: "123",
@@ -57,38 +60,87 @@ export default function Login() {
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            padding: 24,
-            paddingBottom: 100,
+            paddingHorizontal: 24 * scale,
+            paddingVertical: 32 * scale,
+            paddingBottom: 100 * scale,
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {/* Logo & Title */}
-          <View className="items-center mb-12">
-            <View className="w-24 h-24 bg-[#6C4CFF] rounded-3xl items-center justify-center mb-6 shadow-xl shadow-[#6C4CFF]/40">
+          <View style={{ marginBottom: 48 * scale, alignItems: "center" }}>
+            <View
+              style={{
+                width: 96 * scale,
+                height: 96 * scale,
+                backgroundColor: "#6C4CFF",
+                borderRadius: 24 * scale,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 24 * scale,
+                shadowColor: "#6C4CFF",
+                shadowOffset: { width: 0, height: 10 * scale },
+                shadowOpacity: 0.4,
+                shadowRadius: 20 * scale,
+                elevation: 10,
+              }}
+            >
               <Image
                 source={require("../../assets/images/logo.png")}
-                className="w-16 h-16"
+                style={{ width: 64 * scale, height: 64 * scale }}
                 resizeMode="contain"
               />
             </View>
-            <Text className="text-3xl font-bold text-[#121826] text-center leading-tight">
+            <Text
+              style={{
+                fontSize: 30 * scale,
+                fontWeight: "bold",
+                color: "#121826",
+                textAlign: "center",
+                lineHeight: 36 * scale,
+              }}
+            >
               Welcome Back!
             </Text>
-            <Text className="text-[#6B7280] text-base mt-2 text-center px-4">
+            <Text
+              style={{
+                color: "#6B7280",
+                fontSize: 16 * scale,
+                marginTop: 8 * scale,
+                textAlign: "center",
+                paddingHorizontal: 16 * scale,
+              }}
+            >
               Sign in to continue your learning journey
             </Text>
           </View>
 
           {/* Form */}
-          <View className="gap-6">
+          <View style={{ gap: 24 * scale }}>
             {/* Email */}
             <View>
-              <Text className="text-[#121826] font-semibold mb-3 ml-1 text-base">
+              <Text
+                style={{
+                  color: "#121826",
+                  fontWeight: 600,
+                  marginBottom: 12 * scale,
+                  marginLeft: 4 * scale,
+                  fontSize: 16 * scale,
+                }}
+              >
                 Email Address
               </Text>
               <TextInput
-                className="bg-white px-5 py-4 rounded-2xl border border-gray-200 text-[#121826] text-base"
+                style={{
+                  backgroundColor: "white",
+                  paddingHorizontal: 20 * scale,
+                  paddingVertical: 16 * scale,
+                  borderRadius: 20 * scale,
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  fontSize: 16 * scale,
+                  color: "#121826",
+                }}
                 placeholder="hello@example.com"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="email-address"
@@ -101,12 +153,31 @@ export default function Login() {
 
             {/* Password */}
             <View>
-              <Text className="text-[#121826] font-semibold mb-3 ml-1 text-base">
+              <Text
+                style={{
+                  color: "#121826",
+                  fontWeight: 600,
+                  marginBottom: 12 * scale,
+                  marginLeft: 4 * scale,
+                  fontSize: 16 * scale,
+                }}
+              >
                 Password
               </Text>
-              <View className="flex-row items-center bg-white rounded-2xl border border-gray-200 px-5 py-1">
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  borderRadius: 20 * scale,
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  paddingHorizontal: 20 * scale,
+                  paddingVertical: 8 * scale,
+                }}
+              >
                 <TextInput
-                  className="flex-1 text-[#121826] text-base"
+                  style={{ flex: 1, fontSize: 16 * scale, color: "#121826" }}
                   placeholder="Enter your password"
                   placeholderTextColor="#9CA3AF"
                   secureTextEntry={!showPassword}
@@ -119,7 +190,7 @@ export default function Login() {
                 >
                   <Ionicons
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={24}
+                    size={24 * scale}
                     color="#9CA3AF"
                   />
                 </TouchableOpacity>
@@ -127,29 +198,52 @@ export default function Login() {
             </View>
 
             {/* Forgot Password */}
-            <TouchableOpacity className="self-end">
-              <Text className="text-[#6C4CFF] text-base font-semibold">
+            <TouchableOpacity style={{ alignSelf: "flex-end" }}>
+              <Text
+                style={{
+                  color: "#6C4CFF",
+                  fontSize: 16 * scale,
+                  fontWeight: 600,
+                }}
+              >
                 Forgot Password?
               </Text>
             </TouchableOpacity>
 
-            {/* Login Button */}
+            {/* Login Button - WRAPPED for perfect rounding */}
             <TouchableOpacity
-              className="mt-4"
               onPress={handleLogin}
               disabled={isLoading}
               activeOpacity={0.9}
+              style={{ marginTop: 16 * scale }}
             >
-              <LinearGradient
-                colors={["#6C4CFF", "#9B5CFF"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="py-5 rounded-2xl overflow-hidden items-center shadow-xl shadow-[#6C4CFF]/40"
-              >
-                <Text className="text-white  font-bold text-lg tracking-wide">
-                  {isLoading ? "Signing In..." : "Log In"}
-                </Text>
-              </LinearGradient>
+              <View style={{ borderRadius: buttonRadius, overflow: "hidden" }}>
+                <LinearGradient
+                  colors={["#6C4CFF", "#9B5CFF"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    paddingVertical: 20 * scale,
+                    alignItems: "center",
+                    shadowColor: "#6C4CFF",
+                    shadowOffset: { width: 0, height: 10 * scale },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 20 * scale,
+                    elevation: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                      fontWeight: "bold",
+                      fontSize: 18 * scale,
+                      letterSpacing: 0.5 * scale,
+                    }}
+                  >
+                    {isLoading ? "Signing In..." : "Log In"}
+                  </Text>
+                </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </ScrollView>
