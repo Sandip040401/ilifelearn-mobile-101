@@ -1,8 +1,8 @@
-// app/(tabs)/books.tsx - Final consistent version
+// app/(tabs)/books/index.tsx - Complete mobile-working version
 import SafeAreaView from "@/components/SafeAreaView";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -90,171 +90,174 @@ export default function Books() {
           Explore by Grade
         </Text>
 
-        {/* Cards - fixed gap */}
+        {/* Cards */}
         <View className="flex-1" style={{ gap: 16 * scale }}>
           {/* Hummingbird */}
-          <Link href="/(tabs)/books/hummingbird" asChild>
-            <View style={{ borderRadius: cardRadius, overflow: "hidden" }}>
-              <TouchableOpacity
-                style={{
-                  paddingHorizontal: 24 * scale,
-                  paddingVertical: 24 * scale,
-                  backgroundColor: "rgba(16,185,129,0.1)",
-                  borderWidth: 1,
-                  borderColor: "rgba(16,185,129,0.3)",
-                }}
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <View
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/books/hummingbird")}
+            style={{ borderRadius: cardRadius, overflow: "hidden" }}
+          >
+            <View
+              style={{
+                paddingHorizontal: 24 * scale,
+                paddingVertical: 24 * scale,
+                backgroundColor: "rgba(16,185,129,0.1)",
+                borderWidth: 1,
+                borderColor: "rgba(16,185,129,0.3)",
+              }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <View
+                    style={{
+                      width: iconSize,
+                      height: iconSize,
+                      marginRight: 16 * scale,
+                      backgroundColor: "#10B981",
+                      borderRadius: iconRadius,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="trail-sign"
+                      size={28 * scale}
+                      color="white"
+                    />
+                  </View>
+                  <View>
+                    <Text
                       style={{
-                        width: iconSize,
-                        height: iconSize,
-                        marginRight: 16 * scale,
-                        backgroundColor: "#10B981",
-                        borderRadius: iconRadius,
-                        alignItems: "center",
-                        justifyContent: "center",
+                        fontSize: 18 * scale,
+                        fontWeight: 600,
+                        color: "#121826",
                       }}
                     >
-                      <Ionicons
-                        name="trail-sign"
-                        size={28 * scale}
-                        color="white"
-                      />
-                    </View>
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: 18 * scale,
-                          fontWeight: 600,
-                          color: "#121826",
-                        }}
-                      >
-                        Hummingbird
-                      </Text>
-                      <Text style={{ fontSize: 14 * scale, color: "#6B7280" }}>
-                        first, big smiles.
-                      </Text>
-                    </View>
+                      Hummingbird
+                    </Text>
+                    <Text style={{ fontSize: 14 * scale, color: "#6B7280" }}>
+                      first, big smiles.
+                    </Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20 * scale}
-                    color="#10B981"
-                  />
                 </View>
-              </TouchableOpacity>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20 * scale}
+                  color="#10B981"
+                />
+              </View>
             </View>
-          </Link>
+          </TouchableOpacity>
 
           {/* Dove */}
-          <Link href="/(tabs)/books/dove" asChild>
-            <View style={{ borderRadius: cardRadius, overflow: "hidden" }}>
-              <TouchableOpacity
-                style={{
-                  paddingHorizontal: 24 * scale,
-                  paddingVertical: 24 * scale,
-                  backgroundColor: "rgba(59,130,246,0.1)",
-                  borderWidth: 1,
-                  borderColor: "rgba(59,130,246,0.3)",
-                }}
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <View
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/books/dove")}
+            style={{ borderRadius: cardRadius, overflow: "hidden" }}
+          >
+            <View
+              style={{
+                paddingHorizontal: 24 * scale,
+                paddingVertical: 24 * scale,
+                backgroundColor: "rgba(59,130,246,0.1)",
+                borderWidth: 1,
+                borderColor: "rgba(59,130,246,0.3)",
+              }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <View
+                    style={{
+                      width: iconSize,
+                      height: iconSize,
+                      marginRight: 16 * scale,
+                      backgroundColor: "#3B82F6",
+                      borderRadius: iconRadius,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="leaf" size={28 * scale} color="white" />
+                  </View>
+                  <View>
+                    <Text
                       style={{
-                        width: iconSize,
-                        height: iconSize,
-                        marginRight: 16 * scale,
-                        backgroundColor: "#3B82F6",
-                        borderRadius: iconRadius,
-                        alignItems: "center",
-                        justifyContent: "center",
+                        fontSize: 18 * scale,
+                        fontWeight: 600,
+                        color: "#121826",
                       }}
                     >
-                      <Ionicons name="leaf" size={28 * scale} color="white" />
-                    </View>
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: 18 * scale,
-                          fontWeight: 600,
-                          color: "#121826",
-                        }}
-                      >
-                        Dove
-                      </Text>
-                      <Text style={{ fontSize: 14 * scale, color: "#6B7280" }}>
-                        Build words. Count wonders.
-                      </Text>
-                    </View>
+                      Dove
+                    </Text>
+                    <Text style={{ fontSize: 14 * scale, color: "#6B7280" }}>
+                      Build words. Count wonders.
+                    </Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20 * scale}
-                    color="#3B82F6"
-                  />
                 </View>
-              </TouchableOpacity>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20 * scale}
+                  color="#3B82F6"
+                />
+              </View>
             </View>
-          </Link>
+          </TouchableOpacity>
 
           {/* Macaw */}
-          <Link href="/(tabs)/books/macaw" asChild>
-            <View style={{ borderRadius: cardRadius, overflow: "hidden" }}>
-              <TouchableOpacity
-                style={{
-                  paddingHorizontal: 24 * scale,
-                  paddingVertical: 24 * scale,
-                  backgroundColor: "rgba(245,158,11,0.1)",
-                  borderWidth: 1,
-                  borderColor: "rgba(245,158,11,0.3)",
-                }}
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <View
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/books/macaw")}
+            style={{ borderRadius: cardRadius, overflow: "hidden" }}
+          >
+            <View
+              style={{
+                paddingHorizontal: 24 * scale,
+                paddingVertical: 24 * scale,
+                backgroundColor: "rgba(245,158,11,0.1)",
+                borderWidth: 1,
+                borderColor: "rgba(245,158,11,0.3)",
+              }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <View
+                    style={{
+                      width: iconSize,
+                      height: iconSize,
+                      marginRight: 16 * scale,
+                      backgroundColor: "#F59E0B",
+                      borderRadius: iconRadius,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="color-palette"
+                      size={28 * scale}
+                      color="white"
+                    />
+                  </View>
+                  <View>
+                    <Text
                       style={{
-                        width: iconSize,
-                        height: iconSize,
-                        marginRight: 16 * scale,
-                        backgroundColor: "#F59E0B",
-                        borderRadius: iconRadius,
-                        alignItems: "center",
-                        justifyContent: "center",
+                        fontSize: 18 * scale,
+                        fontWeight: 600,
+                        color: "#121826",
                       }}
                     >
-                      <Ionicons
-                        name="color-palette"
-                        size={28 * scale}
-                        color="white"
-                      />
-                    </View>
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: 18 * scale,
-                          fontWeight: 600,
-                          color: "#121826",
-                        }}
-                      >
-                        Macaw
-                      </Text>
-                      <Text style={{ fontSize: 14 * scale, color: "#6B7280" }}>
-                        Ready for reading adventures
-                      </Text>
-                    </View>
+                      Macaw
+                    </Text>
+                    <Text style={{ fontSize: 14 * scale, color: "#6B7280" }}>
+                      Ready for reading adventures
+                    </Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20 * scale}
-                    color="#F59E0B"
-                  />
                 </View>
-              </TouchableOpacity>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20 * scale}
+                  color="#F59E0B"
+                />
+              </View>
             </View>
-          </Link>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>

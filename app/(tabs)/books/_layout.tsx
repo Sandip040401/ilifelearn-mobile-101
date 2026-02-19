@@ -1,12 +1,10 @@
+// app/(tabs)/books/_layout.tsx
 import { Stack } from "expo-router";
 
 export default function BooksLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        presentation: "modal", // Or "card" for stack
-      }}
-    />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" options={{}} />
+    </Stack>
   );
 }
