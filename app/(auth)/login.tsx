@@ -1,20 +1,21 @@
-// Login.tsx - Replace entire component
 import SafeAreaView from "@/components/SafeAreaView";
+import { loginUser } from "@/services/authService";
 import useAuthStore from "@/store/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -32,22 +33,33 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      alert("Please fill in all fields");
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      const mockUser = {
-        id: "123",
-        name: "Test User",
-        email: email,
-      };
+    try {
+      const response = await loginUser({ email, password });
 
-      login(mockUser, "mock-token-123");
-      setIsLoading(false);
-    }, 1500);
+      const { user, token } = response.data;
+
+      if (!user || !token) {
+        throw new Error("Invalid response from server");
+      }
+
+      login(user, token);
+      router.replace("/home-screen");
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
+      Alert.alert("Login Failed", message);
+    } finally {
+      setIsLoading(false); // Fixed: only false here
+    }
   };
 
   return (
@@ -210,7 +222,7 @@ export default function Login() {
               </Text>
             </TouchableOpacity>
 
-            {/* Login Button - WRAPPED for perfect rounding */}
+            {/* Login Button */}
             <TouchableOpacity
               onPress={handleLogin}
               disabled={isLoading}
