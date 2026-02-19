@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from "jwt-decode";
 import { Platform } from "react-native";
 import { create } from "zustand";
 import { createJSONStorage, persist, StateStorage } from "zustand/middleware";
@@ -55,8 +56,23 @@ const useAuthStore = create<AuthState>()(
       isChecking: true,
       isHydrated: false,
 
-      login: (user, token) =>
-        set({ user, token, isAuthenticated: true, isChecking: false }),
+      login: (user, token) => {
+        let userData = { ...user };
+
+        // Match web app's fallback: decode role from token if missing
+        if (!userData.role && token) {
+          try {
+            const decoded: any = jwtDecode(token);
+            if (decoded.role) {
+              userData.role = decoded.role;
+            }
+          } catch (e) {
+            console.error("Failed to decode token for role:", e);
+          }
+        }
+
+        set({ user: userData, token, isAuthenticated: true, isChecking: false });
+      },
 
       logout: () =>
         set({
