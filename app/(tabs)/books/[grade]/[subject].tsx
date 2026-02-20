@@ -1,20 +1,44 @@
-// app/(tabs)/books/[grade]/[subject].tsx - FIXED back button + scrollable
+import ConceptsTab from "@/components/ConceptsTab";
+import EbooksTab from "@/components/EbooksTab";
 import SafeAreaView from "@/components/SafeAreaView";
+import VideosTab from "@/components/VideosTab";
+import { fetchConceptsForHome } from "@/services/conceptService";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    Text,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions
 } from "react-native";
 
 export default function SubjectContent() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const params = useLocalSearchParams();
-  const { grade, subject } = params;
+  const grade = (params.grade as string) || "";
+  const subject = (params.subject as string) || "";
+
+  if (!grade || !subject) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Invalid route parameters</Text>
+      </View>
+    );
+  }
+
+  // States
+  const [activeTab, setActiveTab] = useState("concepts");
+  const [conceptsData, setConceptsData] = useState<any>(null);
+  const [selectedVolume, setSelectedVolume] = useState("all");
+  const [selectedTopicIndex, setSelectedTopicIndex] = useState<number | null>(
+    null,
+  );
+  const [flattenedTopics, setFlattenedTopics] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const scaleW = screenWidth / 375;
   const scaleH = screenHeight / 812;
@@ -29,195 +53,151 @@ export default function SubjectContent() {
   const textTitle = 16 * safeScale;
   const textBody = 14 * safeScale;
 
-  // Dynamic subject config
-  const subjectConfig = {
-    literacy: {
-      gradeName: "Literacy Grade",
-      bg: "#FEF7FF",
-      title: "Units & Concepts",
-      subtitle: "Tap to expand view materials",
-      units: [
-        {
-          num: "1",
-          color: "#EF4444",
-          name: "Red & Green materials",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "2",
-          color: "#3B82F6",
-          name: "Blue & Yellow Vol-1",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "3",
-          color: "#EC4899",
-          name: "Pink & Orange",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "4",
-          color: "#1E40AF",
-          name: "Black & White Vol-1",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "5",
-          color: "#D97706",
-          name: "Brown & Grey",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "6",
-          color: "#A855F7",
-          name: "Violet Vol-1 Vol-1",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "7",
-          color: "#10B981",
-          name: "Combined Sheet",
-          desc: "Literacy Vol-1 Vol-1",
-        },
-        {
-          num: "8",
-          color: "#EF4444",
-          name: "Extra Practice",
-          desc: "Literacy Review",
-        },
-        {
-          num: "9",
-          color: "#3B82F6",
-          name: "Advanced Colors",
-          desc: "Literacy Vol-2",
-        },
-        {
-          num: "10",
-          color: "#EC4899",
-          name: "Final Assessment",
-          desc: "Literacy Complete",
-        },
-      ],
-    },
-    numeracy: {
-      gradeName: "Numeracy Grade",
-      bg: "#EFF6FF",
-      title: "Topics & Activities",
-      subtitle: "Tap to start learning",
-      units: [
-        {
-          num: "1",
-          color: "#10B981",
-          name: "Numbers 1-10",
-          desc: "Numeracy Basics",
-        },
-        {
-          num: "2",
-          color: "#F59E0B",
-          name: "Counting Practice",
-          desc: "Numeracy Vol-1",
-        },
-        {
-          num: "3",
-          color: "#3B82F6",
-          name: "Addition Intro",
-          desc: "Numeracy Vol-1",
-        },
-        {
-          num: "4",
-          color: "#EF4444",
-          name: "Shapes & Patterns",
-          desc: "Numeracy Vol-1",
-        },
-        {
-          num: "5",
-          color: "#8B5CF6",
-          name: "Measurement",
-          desc: "Numeracy Vol-1",
-        },
-        {
-          num: "6",
-          color: "#EC4899",
-          name: "Time Telling",
-          desc: "Numeracy Vol-1",
-        },
-        {
-          num: "7",
-          color: "#06B6D4",
-          name: "Mixed Review",
-          desc: "Numeracy Vol-1",
-        },
-        {
-          num: "8",
-          color: "#10B981",
-          name: "Subtraction Basics",
-          desc: "Numeracy Vol-2",
-        },
-        {
-          num: "9",
-          color: "#F59E0B",
-          name: "Number Patterns",
-          desc: "Numeracy Vol-2",
-        },
-        {
-          num: "10",
-          color: "#3B82F6",
-          name: "Data & Graphs",
-          desc: "Numeracy Complete",
-        },
-      ],
-    },
-    science: {
-      gradeName: "Science Grade",
-      bg: "#F0FDF4",
-      title: "Experiments & Discoveries",
-      subtitle: "Interactive learning activities",
-      units: Array(12)
-        .fill(0)
-        .map((_, i) => ({
-          num: (i + 1).toString(),
-          color: ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"][i % 4],
-          name: `Science Topic ${i + 1}`,
-          desc: "Science Vol-1",
-        })),
-    },
-    rhymes: {
-      gradeName: "Rhymes Grade",
-      bg: "#FEF3C7",
-      title: "Songs & Stories",
-      subtitle: "Listen and sing along",
-      units: Array(12)
-        .fill(0)
-        .map((_, i) => ({
-          num: (i + 1).toString(),
-          color: ["#F59E0B", "#EF4444", "#3B82F6", "#10B981"][i % 4],
-          name: `Rhyme ${i + 1}`,
-          desc: "Rhymes Vol-1",
-        })),
-    },
+  // ✅ COMPLETE flattenTopicsForVolume function
+  const flattenTopicsForVolume = useCallback((data: any, volume: string) => {
+    if (!data?.concepts || !Array.isArray(data.concepts)) {
+      console.warn("No valid concepts array:", data?.concepts);
+      return [];
+    }
+
+    let filteredConcepts = data.concepts.filter((c: any) => c);
+    if (volume !== "all") {
+      filteredConcepts = filteredConcepts.filter(
+        (c: any) => c.volumeNumber === parseInt(volume),
+      );
+    }
+
+    const flattened = filteredConcepts
+      .flatMap((concept: any, conceptIdx: number) => {
+        const topics = concept.topics || [];
+        if (!Array.isArray(topics)) return [];
+        return topics.map((topic: any, topicIdx: number) => ({
+          id: topic.id || `${concept.id}-topic-${topicIdx}`,
+          title: topic.title || "Untitled",
+          conceptTitle: concept.title || "Unknown Concept",
+          volumeNumber: concept.volumeNumber || 1,
+          conceptIndex: conceptIdx,
+          images: Array.isArray(topic.images) ? topic.images : [],
+          videos: Array.isArray(topic.videos) ? topic.videos : [],
+          keyword: topic.keyword || "",
+          color: data.subject?.color || "#EC4899",
+        }));
+      })
+      .filter(Boolean);
+
+    console.log(`✅ Flattened ${flattened.length} topics for vol ${volume}`);
+    return flattened;
+  }, []);
+
+  // ✅ COMPLETE fetchConcepts function
+  const fetchConcepts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`📡 Fetching /home/concepts/${grade}/${subject}`);
+      const response = await fetchConceptsForHome(grade, subject);
+
+      const apiData = response.data;
+      console.log("📦 Full API data:", apiData);
+
+      if (apiData?.success) {
+        setConceptsData(apiData.data);
+        const topics = flattenTopicsForVolume(apiData.data, "all");
+        setFlattenedTopics(topics);
+        if (screenWidth >= 768) {
+          setSelectedTopicIndex(topics.length > 0 ? 0 : null);
+        }
+      } else {
+        throw new Error("API success false");
+      }
+    } catch (err) {
+      setError("Failed to load concepts");
+      console.error("❌ API Error:", err);
+      setFlattenedTopics([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const data =
-    subjectConfig[subject as keyof typeof subjectConfig] ||
-    subjectConfig.literacy;
+  useEffect(() => {
+    fetchConcepts();
+  }, [grade, subject]);
 
-  const goBackToSubjects = () => {
-    "worklet"; // Ensures smooth navigation on gesture-heavy screens
-    router.back();
+  useEffect(() => {
+    if (conceptsData) {
+      const topics = flattenTopicsForVolume(conceptsData, selectedVolume);
+      setFlattenedTopics(topics);
+      setSelectedTopicIndex(
+        screenWidth >= 768 ? (topics.length > 0 ? 0 : null) : null,
+      );
+    }
+  }, [selectedVolume, conceptsData, screenWidth, flattenTopicsForVolume]);
+
+  const goBackToSubjects = () => router.back();
+
+  const tabs = [
+    { id: "concepts", label: "Concepts", icon: "library-outline" },
+    { id: "videos", label: "Videos", icon: "play-outline" },
+    { id: "ebooks", label: "Ebooks", icon: "book-outline" },
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "concepts":
+        return (
+          <ConceptsTab
+            conceptsData={conceptsData}
+            flattenedTopics={flattenedTopics}
+            selectedTopicIndex={selectedTopicIndex}
+            setSelectedTopicIndex={setSelectedTopicIndex}
+            selectedVolume={selectedVolume}
+            setSelectedVolume={setSelectedVolume}
+            loading={loading}
+            error={error}
+            safeScale={safeScale}
+            fetchConcepts={fetchConcepts}
+            cardRadius={cardRadius}
+            paddingH={paddingH}
+            paddingV={paddingV}
+            textTitle={textTitle}
+            textBody={textBody}
+            iconSize={iconSize}
+            iconRadius={iconRadius}
+          />
+        );
+      case "videos":
+        return (
+          <VideosTab
+            conceptsData={conceptsData}
+            safeScale={safeScale}
+            cardRadius={cardRadius}
+          />
+        );
+      case "ebooks":
+        return (
+          <EbooksTab
+            conceptsData={conceptsData}
+            arSheets={conceptsData?.arSheets || []}
+            safeScale={safeScale}
+            cardRadius={cardRadius}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: data.bg }}>
-      {/* FIXED: Header with pointerEvents to block ScrollView interference */}
+    <SafeAreaView className="flex-1" style={{ backgroundColor: "#F8FAFC" }}>
+      {/* Header */}
       <View
-        pointerEvents="box-none" // Allows touches through gaps
         style={{
           paddingHorizontal: 18 * safeScale,
           paddingTop: 12 * safeScale,
-          zIndex: 1000, // Ensures header stays above scroll
+          zIndex: 1000,
         }}
       >
-        {/* Header Card */}
+        {/* Header gradient */}
         <View
           style={{
             marginBottom: 20 * safeScale,
@@ -238,15 +218,15 @@ export default function SubjectContent() {
               paddingHorizontal: 18 * safeScale,
             }}
           >
-            <View className="flex-row items-center justify-between">
-              {/* ULTRA-RELIABLE Back Button */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Pressable
                 onPress={goBackToSubjects}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                android_ripple={{
-                  color: "rgba(255,255,255,0.3)",
-                  radius: 24 * safeScale,
-                }}
                 style={({ pressed }) => ({
                   width: 44 * safeScale,
                   height: 44 * safeScale,
@@ -264,7 +244,6 @@ export default function SubjectContent() {
                   color="white"
                 />
               </Pressable>
-
               <Text
                 style={{
                   fontSize: 17 * safeScale,
@@ -275,9 +254,8 @@ export default function SubjectContent() {
                   marginLeft: -30 * safeScale,
                 }}
               >
-                {data.gradeName}
+                {conceptsData?.subject?.name || subject}
               </Text>
-
               <Pressable
                 style={({ pressed }) => ({
                   width: 44 * safeScale,
@@ -300,172 +278,81 @@ export default function SubjectContent() {
           </LinearGradient>
         </View>
 
-        {/* Tabs */}
+        {/* 🎉 NEW TABS */}
         <View
           style={{
             flexDirection: "row",
             paddingHorizontal: 6 * safeScale,
-            paddingBottom: 12 * safeScale,
+            paddingBottom: 16 * safeScale,
             gap: 8 * safeScale,
           }}
         >
-          {[
-            { name: "Concepts", icon: "albums-outline" },
-            { name: "Videos", icon: "play-outline" },
-            { name: "E-books", icon: "book-outline" },
-          ].map((tab, i) => (
+          {tabs.map((tab) => (
             <Pressable
-              key={i}
-              android_ripple={{ color: "#EC4899", radius: 20 * safeScale }}
+              key={tab.id}
+              onPress={() => setActiveTab(tab.id)}
               style={({ pressed }) => ({
                 flex: 1,
-                paddingVertical: 10 * safeScale,
-                paddingHorizontal: 14 * safeScale,
-                backgroundColor: pressed
-                  ? "rgba(236,72,153,0.25)"
-                  : "rgba(236,72,153,0.15)",
+                paddingVertical: 12 * safeScale,
+                paddingHorizontal: 16 * safeScale,
+                backgroundColor:
+                  activeTab === tab.id
+                    ? "rgba(236,72,153,0.15)"
+                    : "rgba(255,255,255,0.6)",
                 borderRadius: 16 * safeScale,
-                borderWidth: 1,
-                borderColor: "rgba(236,72,153,0.25)",
+                borderWidth: activeTab === tab.id ? 2 : 1,
+                borderColor:
+                  activeTab === tab.id ? "#EC4899" : "rgba(0,0,0,0.1)",
                 alignItems: "center",
+                flexDirection: "row",
+                gap: 8 * safeScale,
+                opacity: pressed ? 0.9 : 1,
               })}
             >
-              <Ionicons name={tab.icon} size={16 * safeScale} color="#EC4899" />
+              <Ionicons
+                name={
+                  activeTab === tab.id
+                    ? tab.icon.replace("-outline", "")
+                    : tab.icon
+                }
+                size={18 * safeScale}
+                color="#EC4899"
+              />
               <Text
                 style={{
-                  fontSize: 10 * safeScale,
+                  fontSize: 13 * safeScale,
                   color: "#EC4899",
-                  fontWeight: "600",
-                  marginTop: 2 * safeScale,
+                  fontWeight: activeTab === tab.id ? "700" : "600",
                 }}
               >
-                {tab.name}
+                {tab.label}
               </Text>
             </Pressable>
           ))}
         </View>
       </View>
 
-      {/* FIXED ScrollView - Separated from header */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 18 * safeScale,
-          paddingBottom: 40 * safeScale,
-          paddingTop: 8 * safeScale,
-        }}
-        showsVerticalScrollIndicator={false}
-        bounces={false} // Reduces gesture conflicts
-        scrollEventThrottle={16}
-        nestedScrollEnabled
-        keyboardShouldPersistTaps="handled"
-        pointerEvents="box-none"
-      >
-        {/* Title */}
-        <View style={{ marginBottom: 20 * safeScale }}>
-          <Text
-            style={{
-              fontSize: 20 * safeScale,
-              fontWeight: "bold",
-              color: "#121826",
-            }}
+      {/* Tab Content */}
+      <View style={{ flex: 1 }}>
+        {activeTab === "concepts" && loading ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
-            {data.title}
-          </Text>
-          <Text
-            style={{
-              fontSize: 14 * safeScale,
-              color: "#6B7280",
-              marginTop: 4 * safeScale,
-            }}
-          >
-            {data.subtitle}
-          </Text>
-        </View>
-
-        {/* FIXED Units - Correct Pressable syntax */}
-        <View style={{ gap: 14 * safeScale }}>
-          {data.units.map((unit, index) => (
-            <Pressable
-              key={index}
-              android_ripple={{
-                color: "rgba(0,0,0,0.1)",
-                radius: 24 * safeScale,
+            <ActivityIndicator size="large" color="#EC4899" />
+            <Text
+              style={{
+                fontSize: 14 * safeScale,
+                color: "#6B7280",
+                marginTop: 12 * safeScale,
               }}
-              style={({ pressed }) => ({
-                borderRadius: cardRadius,
-                opacity: pressed ? 0.9 : 1,
-              })}
             >
-              <View
-                style={{
-                  paddingHorizontal: paddingH,
-                  paddingVertical: paddingV,
-                  backgroundColor: "rgba(255,255,255,0.8)",
-                  borderRadius: cardRadius,
-                  borderWidth: 1,
-                  borderColor: "rgba(0,0,0,0.08)",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 * safeScale },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 4 * safeScale,
-                  elevation: 3,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <View
-                      style={{
-                        width: iconSize,
-                        height: iconSize,
-                        marginRight: 16 * safeScale,
-                        backgroundColor: unit.color,
-                        borderRadius: iconRadius,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 18 * safeScale,
-                          fontWeight: "bold",
-                          color: "white",
-                        }}
-                      >
-                        {unit.num}
-                      </Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          fontSize: textTitle,
-                          fontWeight: "600",
-                          color: "#121826",
-                          marginBottom: 4 * safeScale,
-                        }}
-                      >
-                        {unit.name}
-                      </Text>
-                      <Text style={{ fontSize: textBody, color: "#6B7280" }}>
-                        {unit.desc}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 16 * safeScale, color: "#6B7280" }}>
-                    ▶
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
+              Loading...
+            </Text>
+          </View>
+        ) : (
+          renderTabContent()
+        )}
+      </View>
     </SafeAreaView>
   );
 }
