@@ -251,9 +251,10 @@ export default function ReadAloud() {
       colors={["#FF80B5", "#9089FC", "#3B82F6"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
+      style={{ flex: 1, width:"100%", height:'100%' }}
       className="flex-1"
     >
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1 bg-transparent">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
