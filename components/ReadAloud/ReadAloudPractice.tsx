@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Circle } from "react-native-svg";
 // ┌──────────────────────────────────────────────────────────────────────┐
 // │  REAL STT — uncomment when using a development build               │
 // │  Also remove the MOCK STT block further below.                     │
@@ -25,6 +26,7 @@ import {
 import Animated, {
     FadeIn,
     FadeInDown,
+    useAnimatedProps,
     useAnimatedStyle,
     useSharedValue,
     withRepeat,
@@ -220,6 +222,72 @@ const CurriculumTooltip = ({
     );
 };
 
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
+// ─────────────────────────────────────────────────────────────
+// Animated Circular Progress & Count-Up
+// ─────────────────────────────────────────────────────────────
+const AnimatedScore = ({ accuracy, color }: { accuracy: number, color: string }) => {
+    const progress = useSharedValue(0);
+    const radius = 52;
+    const circumference = 2 * Math.PI * radius;
+
+    useEffect(() => {
+        progress.value = 0;
+        progress.value = withTiming(accuracy, { duration: 1500 });
+    }, [accuracy]);
+
+    const animatedCircleProps = useAnimatedProps(() => {
+        return {
+            strokeDashoffset: circumference * (1 - progress.value / 100),
+        };
+    });
+
+    const animatedTextProps = useAnimatedProps(() => {
+        return {
+            text: `${Math.round(progress.value)}%`,
+        } as any;
+    });
+
+    return (
+        <View className="w-28 h-28 items-center justify-center mb-3 relative">
+            <Svg width={112} height={112} style={{ position: "absolute" }}>
+                <Circle
+                    cx={56}
+                    cy={56}
+                    r={radius}
+                    stroke={color}
+                    strokeWidth={6}
+                    strokeOpacity={0.2}
+                    fill="transparent"
+                />
+                <AnimatedCircle
+                    cx={56}
+                    cy={56}
+                    r={radius}
+                    stroke={color}
+                    strokeWidth={6}
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    animatedProps={animatedCircleProps}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin="56, 56"
+                />
+            </Svg>
+            <AnimatedTextInput
+                underlineColorAndroid="transparent"
+                editable={false}
+                defaultValue="0%"
+                animatedProps={animatedTextProps}
+                className="text-3xl font-black text-center"
+                style={{ color }}
+            />
+        </View>
+    );
+};
+
 // ─────────────────────────────────────────────────────────────
 // AI Analysis Panel
 // ─────────────────────────────────────────────────────────────
@@ -290,132 +358,134 @@ const AIAnalysisPanel = ({
         <Animated.View entering={FadeInDown.duration(400)}>
             {/* Score */}
             <View className="items-center mb-6">
-                <View
-                    style={{ borderColor: color, borderWidth: 4 }}
-                    className="w-24 h-24 rounded-full items-center justify-center mb-3"
-                >
-                    <Text style={{ color }} className="text-3xl font-black">
-                        {accuracy}%
-                    </Text>
-                </View>
+                <AnimatedScore accuracy={accuracy} color={color} />
                 <Text style={{ color }} className="font-bold text-base">
                     {getAccuracyLabel(accuracy)}
                 </Text>
+
             </View>
 
             {/* Word/Image mode result */}
-            {(selectedMode === "word" || selectedMode === "words") && (
-                <View className="bg-slate-50 rounded-2xl p-5 mb-4">
-                    <View className="flex-row justify-between items-center mb-2">
-                        <Text className="text-slate-500 text-xs font-bold uppercase">
-                            Expected
-                        </Text>
-                        <Text className="text-slate-500 text-xs font-bold uppercase">Spoken</Text>
+            {
+                (selectedMode === "word" || selectedMode === "words") && (
+                    <View className="bg-slate-50 rounded-2xl p-5 mb-4">
+                        <View className="flex-row justify-between items-center mb-2">
+                            <Text className="text-slate-500 text-xs font-bold uppercase">
+                                Expected
+                            </Text>
+                            <Text className="text-slate-500 text-xs font-bold uppercase">Spoken</Text>
+                        </View>
+                        <View className="flex-row justify-between items-center">
+                            <Text className="text-slate-800 font-bold text-lg">
+                                {analysis.expectedWord}
+                            </Text>
+                            <Ionicons
+                                name={analysis.correct ? "checkmark-circle" : "close-circle"}
+                                size={22}
+                                color={analysis.correct ? "#10B981" : "#EF4444"}
+                            />
+                            <Text className="text-slate-800 font-bold text-lg">
+                                {analysis.spokenWord}
+                            </Text>
+                        </View>
                     </View>
-                    <View className="flex-row justify-between items-center">
-                        <Text className="text-slate-800 font-bold text-lg">
-                            {analysis.expectedWord}
-                        </Text>
-                        <Ionicons
-                            name={analysis.correct ? "checkmark-circle" : "close-circle"}
-                            size={22}
-                            color={analysis.correct ? "#10B981" : "#EF4444"}
-                        />
-                        <Text className="text-slate-800 font-bold text-lg">
-                            {analysis.spokenWord}
-                        </Text>
-                    </View>
-                </View>
-            )}
+                )
+            }
 
             {/* Sentence mode */}
-            {selectedMode === "sentence" && analysis.wordAnalysis && (
-                <View className="bg-slate-50 rounded-2xl p-5 mb-4">
-                    <Text className="text-slate-500 text-xs font-bold uppercase mb-3">
-                        Word Analysis
-                    </Text>
-                    <View className="flex-row flex-wrap" style={{ gap: 6 }}>
-                        {analysis.wordAnalysis.map((w: any, i: number) => (
-                            <View
-                                key={i}
-                                className={`px-3 py-1.5 rounded-xl border ${w.correct
-                                    ? "bg-emerald-100 border-emerald-200"
-                                    : "bg-red-100 border-red-200"
-                                    }`}
-                            >
-                                <Text
-                                    className={`text-sm font-bold ${w.correct ? "text-emerald-800" : "text-red-800"
+            {
+                selectedMode === "sentence" && analysis.wordAnalysis && (
+                    <View className="bg-slate-50 rounded-2xl p-5 mb-4">
+                        <Text className="text-slate-500 text-xs font-bold uppercase mb-3">
+                            Word Analysis
+                        </Text>
+                        <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+                            {analysis.wordAnalysis.map((w: any, i: number) => (
+                                <View
+                                    key={i}
+                                    className={`px-3 py-1.5 rounded-xl border ${w.correct
+                                        ? "bg-emerald-100 border-emerald-200"
+                                        : "bg-red-100 border-red-200"
                                         }`}
                                 >
-                                    {w.word}
+                                    <Text
+                                        className={`text-sm font-bold ${w.correct ? "text-emerald-800" : "text-red-800"
+                                            }`}
+                                    >
+                                        {w.word}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                        {analysis.wpm > 0 && (
+                            <View className="flex-row items-center mt-4 bg-blue-50 rounded-xl p-3">
+                                <Ionicons name="speedometer" size={18} color="#3B82F6" />
+                                <Text className="text-blue-700 font-bold ml-2">
+                                    {analysis.wpm} WPM
+                                </Text>
+                                <Text className="text-blue-500 text-xs ml-2">
+                                    ({formatDuration(analysis.readingTime)})
                                 </Text>
                             </View>
-                        ))}
+                        )}
                     </View>
-                    {analysis.wpm > 0 && (
-                        <View className="flex-row items-center mt-4 bg-blue-50 rounded-xl p-3">
-                            <Ionicons name="speedometer" size={18} color="#3B82F6" />
-                            <Text className="text-blue-700 font-bold ml-2">
-                                {analysis.wpm} WPM
-                            </Text>
-                            <Text className="text-blue-500 text-xs ml-2">
-                                ({formatDuration(analysis.readingTime)})
-                            </Text>
-                        </View>
-                    )}
-                </View>
-            )}
+                )
+            }
 
             {/* Story mode */}
-            {selectedMode === "story" && analysis.sentenceAnalysis && (
-                <View className="bg-slate-50 rounded-2xl p-5 mb-4">
-                    <Text className="text-slate-500 text-xs font-bold uppercase mb-3">
-                        Sentence Breakdown
-                    </Text>
-                    {analysis.sentenceAnalysis.map((s: any, i: number) => (
-                        <View key={i} className="flex-row items-start mb-3">
-                            <Ionicons
-                                name={s.correct ? "checkmark-circle" : "close-circle"}
-                                size={18}
-                                color={s.correct ? "#10B981" : "#EF4444"}
-                                style={{ marginTop: 2, marginRight: 8 }}
-                            />
-                            <View className="flex-1">
-                                <Text className="text-slate-700 text-sm leading-5">{s.sentence}</Text>
-                                <Text
-                                    className="text-xs font-bold mt-0.5"
-                                    style={{ color: getAccuracyColor(s.accuracy) }}
-                                >
-                                    {s.accuracy}%
+            {
+                selectedMode === "story" && analysis.sentenceAnalysis && (
+                    <View className="bg-slate-50 rounded-2xl p-5 mb-4">
+                        <Text className="text-slate-500 text-xs font-bold uppercase mb-3">
+                            Sentence Breakdown
+                        </Text>
+                        {analysis.sentenceAnalysis.map((s: any, i: number) => (
+                            <View key={i} className="flex-row items-start mb-3">
+                                <Ionicons
+                                    name={s.correct ? "checkmark-circle" : "close-circle"}
+                                    size={18}
+                                    color={s.correct ? "#10B981" : "#EF4444"}
+                                    style={{ marginTop: 2, marginRight: 8 }}
+                                />
+                                <View className="flex-1">
+                                    <Text className="text-slate-700 text-sm leading-5">{s.sentence}</Text>
+                                    <Text
+                                        className="text-xs font-bold mt-0.5"
+                                        style={{ color: getAccuracyColor(s.accuracy) }}
+                                    >
+                                        {s.accuracy}%
+                                    </Text>
+                                </View>
+                            </View>
+                        ))}
+                        {analysis.wpm > 0 && (
+                            <View className="flex-row items-center mt-3 bg-blue-50 rounded-xl p-3">
+                                <Ionicons name="speedometer" size={18} color="#3B82F6" />
+                                <Text className="text-blue-700 font-bold ml-2">
+                                    {analysis.wpm} WPM
+                                </Text>
+                                <Text className="text-blue-500 text-xs ml-2">
+                                    (Target: {analysis.expectedWPM} WPM)
                                 </Text>
                             </View>
-                        </View>
-                    ))}
-                    {analysis.wpm > 0 && (
-                        <View className="flex-row items-center mt-3 bg-blue-50 rounded-xl p-3">
-                            <Ionicons name="speedometer" size={18} color="#3B82F6" />
-                            <Text className="text-blue-700 font-bold ml-2">
-                                {analysis.wpm} WPM
-                            </Text>
-                            <Text className="text-blue-500 text-xs ml-2">
-                                (Target: {analysis.expectedWPM} WPM)
-                            </Text>
-                        </View>
-                    )}
-                </View>
-            )}
+                        )}
+                    </View>
+                )
+            }
 
             {/* Transcript */}
-            {transcript ? (
-                <View className="bg-blue-50 rounded-2xl p-4 mb-4 border border-blue-100">
-                    <Text className="text-blue-500 text-[10px] font-bold uppercase mb-1.5">
-                        Your Speech
-                    </Text>
-                    <Text className="text-blue-800 text-sm font-medium leading-5">
-                        {transcript}
-                    </Text>
-                </View>
-            ) : null}
+            {
+                transcript ? (
+                    <View className="bg-blue-50 rounded-2xl p-4 mb-4 border border-blue-100">
+                        <Text className="text-blue-500 text-[10px] font-bold uppercase mb-1.5">
+                            Your Speech
+                        </Text>
+                        <Text className="text-blue-800 text-sm font-medium leading-5">
+                            {transcript}
+                        </Text>
+                    </View>
+                ) : null
+            }
 
             {/* Actions */}
             <View className="flex-row mt-2" style={{ gap: 10 }}>
@@ -438,7 +508,7 @@ const AIAnalysisPanel = ({
                     </TouchableOpacity>
                 )}
             </View>
-        </Animated.View>
+        </Animated.View >
     );
 };
 
@@ -664,7 +734,7 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
         }
     }, [isRecording]);
     const recordPulseStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: recordPulse.value }],
+        opacity: recordPulse.value,
     }));
 
     // ── Auto-open analysis modal on phones ──
@@ -1149,15 +1219,15 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
     // RENDER
     // ─────────────────────────────────────────────────────────
     return (
-        <View className="flex-1">
+        <View className="flex-1 gap-6 py-2 pb-4">
 
             {/* ── Main Content ── */}
-            <View className={isTablet ? "flex-row flex-1" : "flex-1"} style={isTablet ? { gap: 16 } : undefined}>
+            <View className={isTablet ? "flex-row flex-1" : "flex-1"} style={isTablet ? { gap: 0 } : undefined}>
                 {/* ── Left: Question Card ── */}
                 <View className="flex-1">
                     <Animated.View
                         entering={FadeIn.duration(300)}
-                        className="bg-white rounded-[32px] shadow-lg shadow-slate-200 border border-slate-100 flex-1 mb-4 overflow-hidden"
+                        className="bg-white rounded-[32px] shadow-lg shadow-slate-200 border border-slate-100 flex-1 overflow-hidden"
                     >
 
                         {/* Instruction */}
@@ -1195,12 +1265,11 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
 
                         {/* Scrollable Content Area */}
                         <ScrollView
-                            className="flex-1 px-4 md:px-6"
                             showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 24 }}
+                            contentContainerStyle={{ paddingBottom: 24, flex: 1, paddingHorizontal: 16 }}
                         >
                             {selectedMode === "word" && currentItem.imageUrl && (
-                                <View className="items-center">
+                                <View className="items-center my-auto">
                                     <View className="bg-slate-50 rounded-3xl p-4 w-full items-center border border-slate-100">
                                         <Image
                                             source={{ uri: currentItem.imageUrl }}
@@ -1212,9 +1281,9 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
                             )}
 
                             {selectedMode === "words" && (
-                                <View className="items-center py-6">
-                                    <View className="bg-gradient-to-br bg-slate-50 rounded-3xl px-10 py-8 border border-slate-100">
-                                        <Text className="text-slate-800 text-4xl font-black text-center">
+                                <View className="items-center my-auto w-full py-6">
+                                    <View className=" bg-slate-50 rounded-3xl px-10 py-8 border border-slate-100 w-full">
+                                        <Text className="text-slate-800 text-5xl py-2 font-black text-center">
                                             {currentItem.text}
                                         </Text>
                                     </View>
@@ -1222,22 +1291,22 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
                             )}
 
                             {selectedMode === "sentence" && (
-                                <View className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
-                                    <Text className="text-slate-800 text-xl font-bold leading-8 text-center">
+                                <View className="bg-slate-50 rounded-3xl p-6 border border-slate-100 my-auto">
+                                    <Text className="text-slate-800 text-3xl font-bold leading-10 text-center">
                                         {currentItem.text}
                                     </Text>
                                 </View>
                             )}
 
                             {selectedMode === "story" && (
-                                <View className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
-                                    <Text className="text-[#9089FC] text-lg font-black mb-3">
+                                <View className="bg-white rounded-3xl p-4 border border-slate-100 my-auto">
+                                    <Text className="text-[#9089FC] text-lg text-center font-black mb-3">
                                         {currentItem.title}
                                     </Text>
                                     {currentItem.sentences?.map((sentence: string, i: number) => (
                                         <Text
                                             key={i}
-                                            className="text-slate-700 text-base leading-7 mb-1"
+                                            className="text-slate-700 text-sm bg-slate-50  leading-6 mb-1.5 rounded-lg border border-slate-200 p-2 overflow-hidden"
                                         >
                                             {sentence}
                                         </Text>
