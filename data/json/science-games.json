@@ -1,0 +1,1838 @@
+[
+  {
+    "id": "science-coloring-game",
+    "title": "Coloring Game",
+    "icon": "🎨",
+    "description": "Play the Coloring Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://coloring-game-bad4f.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-communication-game",
+    "title": "Communication Game",
+    "icon": "🎈",
+    "description": "Play the Communication Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://communication-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-counting-seeds",
+    "title": "Counting Seeds",
+    "icon": "🔢",
+    "description": "Play the Counting Seeds game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://counting-seeds.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-cow-game",
+    "title": "Cow Game",
+    "icon": "🐾",
+    "description": "Play the Cow Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://cow-game-cb4e8.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-crab-game",
+    "title": "Crab Game",
+    "icon": "🐾",
+    "description": "Play the Crab Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://crab-game-abcdc.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-donkey-game",
+    "title": "Donkey Game",
+    "icon": "🐾",
+    "description": "Play the Donkey Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://donkey-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-flower-color",
+    "title": "Flower Color",
+    "icon": "🌱",
+    "description": "Play the Flower Color game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://flower-colors-5ad78.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-food-game",
+    "title": "Food Game",
+    "icon": "🍎",
+    "description": "Play the Food Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://food-game-f82fc.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-force-and-motion",
+    "title": "Force And Motion",
+    "icon": "⚙️",
+    "description": "Play the Force And Motion game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": [
+        "https://force-motion-game.web.app"
+      ]
+    }
+  },
+  {
+    "id": "science-fox-game",
+    "title": "Fox Game",
+    "icon": "🐾",
+    "description": "Play the Fox Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://fox-game-fde74.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-frog-game",
+    "title": "Frog Game",
+    "icon": "🐾",
+    "description": "Play the Frog Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://frog-game-apps.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-healthy-food",
+    "title": "Healthy Food",
+    "icon": "🍎",
+    "description": "Play the Healthy Food game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://healthy-food-6c2d3.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-hungry-mouse",
+    "title": "Hungry Mouse",
+    "icon": "🎯",
+    "description": "Play the Hungry Mouse game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://hungry-mouse.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-inclined-plane-game",
+    "title": "Inclined Plane Game",
+    "icon": "⚙️",
+    "description": "Play the Inclined Plane Game game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": [
+        "https://inclined-plane-game.web.app/"
+      ]
+    }
+  },
+  {
+    "id": "science-india-game",
+    "title": "India Game",
+    "icon": "🗺️",
+    "description": "Play the India Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://india-games-kid.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-jelly-fish-game",
+    "title": "Jelly Fish Game",
+    "icon": "🌟",
+    "description": "Play the Jelly Fish Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://jelly-fish-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-kenya-game",
+    "title": "Kenya Game",
+    "icon": "🗺️",
+    "description": "Play the Kenya Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://kenya-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-ladybug-game",
+    "title": "Ladybug Game",
+    "icon": "🐾",
+    "description": "Play the Ladybug Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://ladybug-games-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-ant-game",
+    "title": "Ant Game",
+    "icon": "🐾",
+    "description": "Play the Ant Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://ant-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-apple-game",
+    "title": "Apple Game",
+    "icon": "🪄",
+    "description": "Play the Apple Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://apple-game-play.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-bat-game",
+    "title": "Bat Game",
+    "icon": "🐾",
+    "description": "Play the Bat Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://bat-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-bear-game",
+    "title": "Bear Game",
+    "icon": "🐾",
+    "description": "Play the Bear Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://bear-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-building-puzzle-game",
+    "title": "Building Puzzle Game",
+    "icon": "🧩",
+    "description": "Play the Building Puzzle Game game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://building-game-app.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-butterfly-game",
+    "title": "Butterfly Game",
+    "icon": "🐾",
+    "description": "Play the Butterfly Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://butterfly-game-apps.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-chicken-game",
+    "title": "Chicken Game",
+    "icon": "🐾",
+    "description": "Play the Chicken Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://chicken-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-china-game",
+    "title": "China Game",
+    "icon": "🗺️",
+    "description": "Play the China Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://china-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-animal-match",
+    "title": "Animal Match",
+    "icon": "🧩",
+    "description": "Play the Animal Match game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://animal-match-48cf5.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-light-and-heavy-game",
+    "title": "Light And Heavy Game",
+    "icon": "🪄",
+    "description": "Play the Light And Heavy Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://light-and-heavy.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-lion-game",
+    "title": "Lion Game",
+    "icon": "🐾",
+    "description": "Play the Lion Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://lion-game-51441.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-magnet-game",
+    "title": "Magnet Game",
+    "icon": "⚙️",
+    "description": "Play the Magnet Game game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": [
+        "https://magnet-game-app.web.app/"
+      ]
+    }
+  },
+  {
+    "id": "science-match-face",
+    "title": "Match Face",
+    "icon": "🧩",
+    "description": "Play the Match Face game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://match-face-game.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-match-shape",
+    "title": "Match shape",
+    "icon": "🧩",
+    "description": "Play the Match shape game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://match-shapes.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-memory-game",
+    "title": "Memory Game",
+    "icon": "🧩",
+    "description": "Play the Memory Game game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://memory-game-b1b36.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-mexico-game",
+    "title": "Mexico Game",
+    "icon": "🗺️",
+    "description": "Play the Mexico Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://mexico-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-missing-acorns",
+    "title": "Missing Acorns",
+    "icon": "🎲",
+    "description": "Play the Missing Acorns game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://missing-acorns.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-my-skeleton-game",
+    "title": "My Skeleton Game",
+    "icon": "⚙️",
+    "description": "Play the My Skeleton Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://my-skeleton-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-my-5-senses",
+    "title": "My 5 Senses",
+    "icon": "🔢",
+    "description": "Play the My 5 Senses game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://my5-sense-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-natrual-resources-game",
+    "title": "Natrual resources game",
+    "icon": "🧠",
+    "description": "Play the Natrual resources game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://natural-resources-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-odd-one-out",
+    "title": "Odd One Out",
+    "icon": "🎉",
+    "description": "Play the Odd One Out game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://odd-one-out-6eaed.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-pet-fish-game",
+    "title": "Pet Fish Game",
+    "icon": "🚀",
+    "description": "Play the Pet Fish Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://pet-fish-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-pumpkin-game",
+    "title": "Pumpkin Game",
+    "icon": "🎉",
+    "description": "Play the Pumpkin Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://pumkin-games-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-puzzle-fun",
+    "title": "Puzzle Fun",
+    "icon": "🧩",
+    "description": "Play the Puzzle Fun game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://puzzle-fun-fe18e.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-recreation-game",
+    "title": "Recreation Game",
+    "icon": "🌟",
+    "description": "Play the Recreation Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://recreation-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-robin-game",
+    "title": "Robin Game",
+    "icon": "🐾",
+    "description": "Play the Robin Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://robin-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-rocks-game",
+    "title": "Rocks Game",
+    "icon": "🎲",
+    "description": "Play the Rocks Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://rocks-game-20dcf.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-shark-game",
+    "title": "Shark Game",
+    "icon": "🐾",
+    "description": "Play the Shark Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://shark-game-6e1e2.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-snow-and-ice",
+    "title": "Snow And Ice",
+    "icon": "⚙️",
+    "description": "Play the Snow And Ice game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://shdow-ice-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-shell-puzzle-game",
+    "title": "Shell Puzzle Game",
+    "icon": "🧩",
+    "description": "Play the Shell Puzzle Game game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://shell-puzzle-game.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-simple-machine-game",
+    "title": "Simple Machine Game",
+    "icon": "⚙️",
+    "description": "Play the Simple Machine Game game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": [
+        "https://simple-machines-game.web.app/"
+      ]
+    }
+  },
+  {
+    "id": "science-big-and-small-game",
+    "title": "Big And Small Game",
+    "icon": "🚀",
+    "description": "Play the Big And Small Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://small-and-big-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-sort-the-trash",
+    "title": "Sort The Trash",
+    "icon": "🌟",
+    "description": "Play the Sort The Trash game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://sort-the-trash.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-squirrel-game",
+    "title": "Squirrel Game",
+    "icon": "🐾",
+    "description": "Play the Squirrel Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://squirrel-game-5.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-statue-of-liberty-game",
+    "title": "statue of liberty game",
+    "icon": "🗺️",
+    "description": "Play the statue of liberty game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://stauteofliberty-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-tiger-game",
+    "title": "Tiger Game",
+    "icon": "🐾",
+    "description": "Play the Tiger Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://tiger-game-aa3e1.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-tooth-game",
+    "title": "Tooth Game",
+    "icon": "🎉",
+    "description": "Play the Tooth Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://tooth-gam-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-transportaion-game",
+    "title": "Transportaion Game",
+    "icon": "🚀",
+    "description": "Play the Transportaion Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://transportaion-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-tree-game",
+    "title": "Tree game",
+    "icon": "🌱",
+    "description": "Play the Tree game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://tree-game-app.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-weather-game",
+    "title": "Weather Game",
+    "icon": "⚙️",
+    "description": "Play the Weather Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://weather-game-55053.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-what-is-that-fruit",
+    "title": "What Is That Fruit",
+    "icon": "🍎",
+    "description": "Play the What Is That Fruit game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://what-is-that-fruit.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-what-is-that-vegetable",
+    "title": "What Is That Vegetable",
+    "icon": "🍎",
+    "description": "Play the What Is That Vegetable game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://what-is-that-vegetable.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-what-is-a-holiday",
+    "title": "what is a holiday",
+    "icon": "🎲",
+    "description": "Play the what is a holiday game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://whatisaholiday.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-sink-or-float",
+    "title": "Sink Or Float",
+    "icon": "⚙️",
+    "description": "Play the Sink Or Float game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://sink-or-float.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-calendar-game",
+    "title": "Calendar Game",
+    "icon": "⚙️",
+    "description": "Play the Calendar Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://calendar-game-f6cac.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-color-switch",
+    "title": "Color Switch",
+    "icon": "🎨",
+    "description": "Play the Color Switch game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://color-switch-f0dfe.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-computer-game",
+    "title": "Computer Game",
+    "icon": "⚙️",
+    "description": "Play the Computer Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://computer-game-89893.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-physics-ball",
+    "title": "Physics Ball",
+    "icon": "⚙️",
+    "description": "Play the Physics Ball game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": [
+        "https://physics-ball.web.app/"
+      ]
+    }
+  },
+  {
+    "id": "science-critsmas-tree",
+    "title": "Critsmas Tree",
+    "icon": "🌱",
+    "description": "Play the Critsmas Tree game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://christmas-tree-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-identify-activities",
+    "title": "Identify Activities",
+    "icon": "🧩",
+    "description": "Play the Identify Activities game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://identify-activities.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-unicorn-puzzle",
+    "title": "Unicorn Puzzle",
+    "icon": "🧩",
+    "description": "Play the Unicorn Puzzle game and learn interactively!",
+    "basic": {
+      "games": []
+    },
+    "intermediate": {
+      "games": [
+        "https://unicorn-puzzle.web.app/"
+      ]
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-alpaca-game",
+    "title": "Alpaca game",
+    "icon": "🐾",
+    "description": "Play the Alpaca game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://alpaca-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-badger-game",
+    "title": "Badger Game",
+    "icon": "🐾",
+    "description": "Play the Badger Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://badger-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-armadillo-game",
+    "title": "Armadillo Game",
+    "icon": "🐾",
+    "description": "Play the Armadillo Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://armadillo-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-badicoot-game",
+    "title": "Badicoot Game",
+    "icon": "✨",
+    "description": "Play the Badicoot Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://bandicoot-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-beaver-game",
+    "title": "Beaver Game",
+    "icon": "🐾",
+    "description": "Play the Beaver Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://beaver-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-bison-game",
+    "title": "Bison Game",
+    "icon": "🐾",
+    "description": "Play the Bison Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://bison-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-buffalo-game",
+    "title": "Buffalo Game",
+    "icon": "🐾",
+    "description": "Play the Buffalo Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://buffalo-game-e65f7.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-camel-game",
+    "title": "Camel Game",
+    "icon": "🐾",
+    "description": "Play the Camel Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://camel-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-cheetah-game",
+    "title": "Cheetah Game",
+    "icon": "🐾",
+    "description": "Play the Cheetah Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://cheetah-game-b3189.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-deer-game",
+    "title": "Deer Game",
+    "icon": "🐾",
+    "description": "Play the Deer Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://deer-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-giraffe-game",
+    "title": "Giraffe Game",
+    "icon": "🐾",
+    "description": "Play the Giraffe Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://giraffe-game-ce6df.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-elephant-game",
+    "title": "Elephant Game",
+    "icon": "🐾",
+    "description": "Play the Elephant Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://elephant-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-gorilla-game",
+    "title": "Gorilla Game",
+    "icon": "🐾",
+    "description": "Play the Gorilla Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://gorilla-game-134a6.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-heyna-game",
+    "title": "Heyna Game",
+    "icon": "🧠",
+    "description": "Play the Heyna Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://heyna-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-impala-game",
+    "title": "Impala Game",
+    "icon": "🐾",
+    "description": "Play the Impala Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://impala-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-kangaroo-game",
+    "title": "Kangaroo Game",
+    "icon": "🐾",
+    "description": "Play the Kangaroo Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://kangaroo-game-ddc6a.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-puma-game",
+    "title": "Puma Game",
+    "icon": "🐾",
+    "description": "Play the Puma Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://puma-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-koala-game",
+    "title": "Koala Game",
+    "icon": "🐾",
+    "description": "Play the Koala Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://koala-a6cd5.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-monkey-game",
+    "title": "Monkey Game",
+    "icon": "🐾",
+    "description": "Play the Monkey Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://monkey-game-787dc.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-mustang-game",
+    "title": "Mustang Game",
+    "icon": "🐾",
+    "description": "Play the Mustang Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://mustang-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-platypus-game",
+    "title": "Platypus Game",
+    "icon": "🐾",
+    "description": "Play the Platypus Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://platypus-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-muskox-game",
+    "title": "Muskox Game",
+    "icon": "🐾",
+    "description": "Play the Muskox Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://muskox-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-pangolin-game",
+    "title": "Pangolin Game",
+    "icon": "🐾",
+    "description": "Play the Pangolin Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://pangolin-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-moose-game",
+    "title": "Moose Game",
+    "icon": "🐾",
+    "description": "Play the Moose Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://moose-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-mongoose-game",
+    "title": "Mongoose Game",
+    "icon": "🐾",
+    "description": "Play the Mongoose Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://mongoose-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-mole-game",
+    "title": "Mole Game",
+    "icon": "🐾",
+    "description": "Play the Mole Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://mole-game-c8b1d.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-martin-game",
+    "title": "Martin Game",
+    "icon": "🪄",
+    "description": "Play the Martin Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://marten-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-lemur-game",
+    "title": "Lemur Game",
+    "icon": "🐾",
+    "description": "Play the Lemur Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://lemur-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-fox-game-2",
+    "title": "Fox Game 2",
+    "icon": "🔢",
+    "description": "Play the Fox Game 2 game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://fox-game-fdfc7.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-zebra-game",
+    "title": "Zebra Game",
+    "icon": "🐾",
+    "description": "Play the Zebra Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://zebra-game-736af.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-yak-game",
+    "title": "Yak Game",
+    "icon": "🐾",
+    "description": "Play the Yak Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://yak-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-wombat-game",
+    "title": "Wombat Game",
+    "icon": "🐾",
+    "description": "Play the Wombat Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://wombat-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-tarsier-game",
+    "title": "Tarsier Game",
+    "icon": "🐾",
+    "description": "Play the Tarsier Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://tarsier-game.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-warthog-game",
+    "title": "Warthog Game",
+    "icon": "🐾",
+    "description": "Play the Warthog Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://warthog-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-tapir-game",
+    "title": "Tapir Game",
+    "icon": "🐾",
+    "description": "Play the Tapir Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://tapir-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-skunk-game",
+    "title": "Skunk Game",
+    "icon": "🐾",
+    "description": "Play the Skunk Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://skunk-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-rabbit-game",
+    "title": "Rabbit Game",
+    "icon": "🐾",
+    "description": "Play the Rabbit Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://rabbit-game-97745.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-quail-game",
+    "title": "Quail Game",
+    "icon": "🐾",
+    "description": "Play the Quail Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://quail-game.web.app"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  },
+  {
+    "id": "science-viscacha-game",
+    "title": "Viscacha Game",
+    "icon": "🪄",
+    "description": "Play the Viscacha Game game and learn interactively!",
+    "basic": {
+      "games": [
+        "https://viscacha-2fa26.web.app/"
+      ]
+    },
+    "intermediate": {
+      "games": []
+    },
+    "advanced": {
+      "games": []
+    }
+  }
+]
