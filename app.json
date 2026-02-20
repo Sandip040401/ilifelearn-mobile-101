@@ -11,8 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
+        "NSSpeechRecognitionUsageDescription": "$(PRODUCT_NAME) needs speech recognition to analyze your pronunciation and provide feedback.",
+        "NSMicrophoneUsageDescription": "$(PRODUCT_NAME) needs microphone access to listen to your voice during reading practice."
       }
     },
     "android": {
@@ -25,7 +25,6 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.jaswantsoni41.ilifelearnmobile101"
