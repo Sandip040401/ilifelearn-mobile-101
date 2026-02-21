@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Video } from "expo-av"; // npx expo install expo-av
+import { Video } from "expo-av";
 import { useState } from "react";
 import {
-    FlatList,
     Image,
     Modal,
     ScrollView,
@@ -26,21 +25,23 @@ export default function TopicModal({
   safeScale,
   cardRadius,
 }: TopicModalProps) {
-  const [mediaModal, setMediaModal] = useState({
-    visible: false,
+  const [activeMedia, setActiveMedia] = useState({
     url: "",
     type: "" as "images" | "videos" | "worksheets",
+    index: -1,
   });
 
-  const closeMediaModal = () => {
-    setMediaModal({ visible: false, url: "", type: "" });
+  const closeMedia = () => {
+    setActiveMedia({ url: "", type: "", index: -1 });
   };
 
   const openMedia = (
     url: string,
-    type: "images" | "videos" | "workssheets",
+    type: "images" | "videos" | "worksheets",
+    index: number,
   ) => {
-    setMediaModal({ visible: true, url, type });
+    console.log("Opening media:", { url, type, index });
+    setActiveMedia({ url, type, index });
   };
 
   const renderContentSection = (
@@ -73,23 +74,32 @@ export default function TopicModal({
           </Text>
         </View>
 
-        <FlatList
-          data={items}
-          numColumns={3}
-          keyExtractor={(_, index) => `item-${index}`}
-          renderItem={({ item, index }) => (
+        <ScrollView
+          horizontal={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            paddingHorizontal: 4 * safeScale,
+          }}
+        >
+          {items.map((item, index) => (
             <TouchableOpacity
-              onPress={() => openMedia(item, type)}
+              key={`item-${index}`}
+              onPress={() => openMedia(item, type, index)}
               style={{
-                flex: 1,
-                margin: 4 * safeScale,
+                width: "30%",
                 height: 100 * safeScale,
+                margin: 4 * safeScale,
                 backgroundColor: "#F1F5F9",
                 borderRadius: 12 * safeScale,
                 justifyContent: "center",
                 alignItems: "center",
                 borderWidth: 2,
-                borderColor: "rgba(0,0,0,0.05)",
+                borderColor:
+                  activeMedia.type === type && activeMedia.index === index
+                    ? "#EC4899"
+                    : "rgba(0,0,0,0.05)",
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 * safeScale },
                 shadowOpacity: 0.08,
@@ -133,10 +143,8 @@ export default function TopicModal({
                 {index + 1}
               </Text>
             </TouchableOpacity>
-          )}
-          scrollEnabled={false}
-          showsVerticalScrollIndicator={false}
-        />
+          ))}
+        </ScrollView>
       </View>
     );
   };
@@ -144,253 +152,222 @@ export default function TopicModal({
   if (!topic) return null;
 
   return (
-    <>
-      {/* MAIN TOPIC MODAL */}
-      <Modal
-        visible={visible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 18 * safeScale,
-              paddingVertical: 16 * safeScale,
-              backgroundColor: "white",
-              borderBottomWidth: 1,
-              borderBottomColor: "rgba(0,0,0,0.08)",
-            }}
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
+        {/* Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 18 * safeScale,
+            paddingVertical: 16 * safeScale,
+            backgroundColor: "white",
+            borderBottomWidth: 1,
+            borderBottomColor: "rgba(0,0,0,0.08)",
+          }}
+        >
+          <TouchableOpacity
+            onPress={onClose}
+            style={{ padding: 8 * safeScale }}
           >
-            <TouchableOpacity
-              onPress={onClose}
-              style={{ padding: 8 * safeScale }}
+            <Ionicons
+              name="close-outline"
+              size={24 * safeScale}
+              color="#EF4444"
+            />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text
+              style={{
+                fontSize: 18 * safeScale,
+                fontWeight: "700",
+                color: "#121826",
+              }}
             >
-              <Ionicons
-                name="close-outline"
-                size={24 * safeScale}
-                color="#EF4444"
-              />
-            </TouchableOpacity>
-            <View style={{ flex: 1, alignItems: "center" }}>
+              {topic.title}
+            </Text>
+            <Text style={{ fontSize: 14 * safeScale, color: "#6B7280" }}>
+              {topic.conceptTitle} • Vol {topic.volumeNumber}
+            </Text>
+          </View>
+          <View style={{ width: 24 * safeScale }} />
+        </View>
+
+        {/* Content */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: 20 * safeScale,
+            paddingBottom: 40 * safeScale,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderContentSection(
+            "Images",
+            topic.images || [],
+            "image-outline",
+            "images",
+          )}
+          {renderContentSection(
+            "Videos",
+            topic.videos || [],
+            "play-outline",
+            "videos",
+          )}
+          {topic.arSheets?.length > 0 &&
+            renderContentSection(
+              "Worksheets",
+              topic.arSheets || [],
+              "document-outline",
+              "worksheets",
+            )}
+
+          {topic.keyword && (
+            <View
+              style={{
+                backgroundColor: "rgba(236,72,153,0.1)",
+                padding: 16 * safeScale,
+                borderRadius: 12 * safeScale,
+                marginBottom: 24 * safeScale,
+              }}
+            >
               <Text
                 style={{
-                  fontSize: 18 * safeScale,
-                  fontWeight: "700",
-                  color: "#121826",
+                  fontSize: 14 * safeScale,
+                  fontWeight: "600",
+                  color: "#EC4899",
+                  marginBottom: 8 * safeScale,
                 }}
               >
-                {topic.title}
+                Keyword
               </Text>
-              <Text style={{ fontSize: 14 * safeScale, color: "#6B7280" }}>
-                {topic.conceptTitle} • Vol {topic.volumeNumber}
+              <Text style={{ fontSize: 16 * safeScale, color: "#121826" }}>
+                {topic.keyword}
               </Text>
             </View>
-            <View style={{ width: 24 * safeScale }} />
-          </View>
+          )}
 
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{
-              padding: 20 * safeScale,
-              paddingBottom: 40 * safeScale,
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#EC4899",
+              paddingVertical: 16 * safeScale,
+              borderRadius: 12 * safeScale,
+              alignItems: "center",
+              marginTop: 20 * safeScale,
             }}
-            showsVerticalScrollIndicator={false}
+            activeOpacity={0.9}
           >
-            {renderContentSection(
-              "Images",
-              topic.images || [],
-              "image-outline",
-              "images",
-            )}
-            {renderContentSection(
-              "Videos",
-              topic.videos || [],
-              "play-outline",
-              "videos",
-            )}
-            {topic.arSheets?.length > 0 &&
-              renderContentSection(
-                "Worksheets",
-                topic.arSheets || [],
-                "document-outline",
-                "worksheets",
-              )}
+            <Text
+              style={{
+                color: "white",
+                fontSize: 16 * safeScale,
+                fontWeight: "700",
+              }}
+            >
+              Start Learning This Topic
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
 
-            {topic.keyword && (
-              <View
-                style={{
-                  backgroundColor: "rgba(236,72,153,0.1)",
-                  padding: 16 * safeScale,
-                  borderRadius: 12 * safeScale,
-                  marginBottom: 24 * safeScale,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14 * safeScale,
-                    fontWeight: "600",
-                    color: "#EC4899",
-                    marginBottom: 8 * safeScale,
-                  }}
-                >
-                  Keyword
-                </Text>
-                <Text style={{ fontSize: 16 * safeScale, color: "#121826" }}>
-                  {topic.keyword}
-                </Text>
-              </View>
-            )}
-
+        {/* ✅ SINGLE FULLSCREEN MEDIA VIEWER - Replaces nested modal */}
+        {activeMedia.url && (
+          <TouchableOpacity
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.95)",
+              zIndex: 2000,
+            }}
+            activeOpacity={1}
+            onPress={closeMedia}
+          >
             <TouchableOpacity
               style={{
-                backgroundColor: "#EC4899",
-                paddingVertical: 16 * safeScale,
-                borderRadius: 12 * safeScale,
+                position: "absolute",
+                top: 60,
+                right: 20,
+                zIndex: 3000,
+                backgroundColor: "rgba(0,0,0,0.8)",
+                borderRadius: 25,
+                width: 50,
+                height: 50,
+                justifyContent: "center",
                 alignItems: "center",
-                marginTop: 20 * safeScale,
               }}
-              activeOpacity={0.9}
+              onPress={closeMedia}
             >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: 16 * safeScale,
-                  fontWeight: "700",
-                }}
-              >
-                Start Learning This Topic
-              </Text>
+              <Ionicons name="close-outline" size={28} color="white" />
             </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </Modal>
 
-      {/* FIXED MEDIA VIEWER */}
-      <Modal
-        visible={mediaModal.visible}
-        animationType="fade"
-        transparent={true}
-        statusBarTranslucent
-      >
-        <TouchableOpacity
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.92)" }}
-          activeOpacity={1}
-          onPress={closeMediaModal}
-        >
-          {/* IMAGE - Working */}
-          {mediaModal.type === "images" && mediaModal.url && (
-            <View style={{ flex: 1 }}>
-              <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  top: 60,
-                  right: 20,
-                  zIndex: 1000,
-                  backgroundColor: "rgba(0,0,0,0.8)",
-                  borderRadius: 25,
-                  width: 50,
-                  height: 50,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onPress={closeMediaModal}
-              >
-                <Ionicons name="close-outline" size={28} color="white" />
-              </TouchableOpacity>
-
-              <Image
-                source={{ uri: mediaModal.url }}
-                style={{ flex: 1, width: "100%", height: "100%" }}
-                resizeMode="contain"
-              />
-            </View>
-          )}
-
-          {/* VIDEO - FULLY WORKING */}
-          {mediaModal.type === "videos" && mediaModal.url && (
-            <View style={{ flex: 1 }}>
-              <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  top: 60,
-                  right: 20,
-                  zIndex: 1000,
-                  backgroundColor: "rgba(0,0,0,0.8)",
-                  borderRadius: 25,
-                  width: 50,
-                  height: 50,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onPress={closeMediaModal}
-              >
-                <Ionicons name="close-outline" size={28} color="white" />
-              </TouchableOpacity>
-
-              <Video
-                source={{ uri: mediaModal.url }}
-                style={{ flex: 1, width: "100%", height: "100%" }}
-                useNativeControls
-                resizeMode="contain"
-                shouldPlay={false}
-                isLooping={false}
-              />
-            </View>
-          )}
-
-          {/* WORKSHEET PLACEHOLDER */}
-          {mediaModal.type === "worksheets" && (
             <View
               style={{
                 flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                padding: 40,
               }}
             >
-              <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  top: 60,
-                  right: 20,
-                  backgroundColor: "rgba(0,0,0,0.8)",
-                  borderRadius: 25,
-                  width: 50,
-                  height: 50,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onPress={closeMediaModal}
-              >
-                <Ionicons name="close-outline" size={28} color="white" />
-              </TouchableOpacity>
-
-              <View
-                style={{
-                  backgroundColor: "#FCD34D",
-                  padding: 60,
-                  borderRadius: 20,
-                  alignItems: "center",
-                }}
-              >
-                <Ionicons name="document" size={80} color="#B45309" />
-                <Text
+              {activeMedia.type === "images" && (
+                <Image
+                  source={{ uri: activeMedia.url }}
                   style={{
-                    fontSize: 20,
-                    fontWeight: "700",
-                    textAlign: "center",
-                    marginTop: 20,
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: 400,
+                    maxHeight: 600,
+                  }}
+                  resizeMode="contain"
+                />
+              )}
+
+              {activeMedia.type === "videos" && (
+                <Video
+                  source={{ uri: activeMedia.url }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: 400,
+                    maxHeight: 600,
+                  }}
+                  useNativeControls
+                  resizeMode="contain"
+                  shouldPlay
+                  isLooping={false}
+                />
+              )}
+
+              {activeMedia.type === "worksheets" && (
+                <View
+                  style={{
+                    backgroundColor: "#FCD34D",
+                    padding: 60,
+                    borderRadius: 20,
+                    alignItems: "center",
                   }}
                 >
-                  Worksheet PDF{"\n"}Viewer Coming Soon
-                </Text>
-              </View>
+                  <Ionicons name="document" size={80} color="#B45309" />
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      fontWeight: "700",
+                      textAlign: "center",
+                      marginTop: 20,
+                    }}
+                  >
+                    Worksheet PDF Viewer Coming Soon
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </TouchableOpacity>
-      </Modal>
-    </>
+          </TouchableOpacity>
+        )}
+      </View>
+    </Modal>
   );
 }

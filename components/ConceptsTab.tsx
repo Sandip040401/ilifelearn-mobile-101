@@ -1,13 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { router } from "expo-router"; // ✅ ADD THIS
 import {
-    ActivityIndicator,
-    FlatList,
-    Pressable,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  Text,
+  View,
 } from "react-native";
-import TopicModal from "./TopicModal";
+// ✅ REMOVE: import TopicModal from "./TopicModal";
 
 interface ConceptsTabProps {
   conceptsData: any;
@@ -27,6 +27,8 @@ interface ConceptsTabProps {
   textBody: number;
   iconSize: number;
   iconRadius: number;
+  grade: string; // ✅ ADD - for navigation path
+  subject: string; // ✅ ADD - for navigation path
 }
 
 export default function ConceptsTab({
@@ -47,9 +49,12 @@ export default function ConceptsTab({
   iconSize,
   iconRadius,
   cardRadius,
+  grade, // ✅ NEW
+  subject, // ✅ NEW
 }: ConceptsTabProps) {
-  const [showTopicModal, setShowTopicModal] = useState(false);
-  const [selectedTopicForModal, setSelectedTopicForModal] = useState<any>(null);
+  // ✅ REMOVE THESE MODAL STATES
+  // const [showTopicModal, setShowTopicModal] = useState(false);
+  // const [selectedTopicForModal, setSelectedTopicForModal] = useState<any>(null);
 
   const volumeNumbers = conceptsData?.concepts
     ? [
@@ -59,15 +64,26 @@ export default function ConceptsTab({
       ].sort((a, b) => a - b)
     : [];
 
+  // ✅ UPDATED - Navigate instead of modal
   const handleTopicPress = (topic: any, index: number) => {
-    setSelectedTopicForModal(topic);
     setSelectedTopicIndex(index);
-    setShowTopicModal(true);
+
+    // Navigate to topic page with topic data
+    router.push({
+      pathname: `/books/${grade}/topic`,
+      params: {
+        topic: JSON.stringify(topic),
+        safeScale: safeScale.toString(),
+        cardRadius: cardRadius.toString(),
+      },
+    });
   };
 
   const handleVolumeSelect = (volume: string) => {
     setSelectedVolume(volume);
   };
+
+  // ... ALL your existing loading/error/empty states - NO CHANGES ...
 
   if (loading) {
     return (
@@ -142,6 +158,7 @@ export default function ConceptsTab({
 
   return (
     <View style={{ flex: 1 }}>
+      {/* ALL your volume filters - NO CHANGES */}
       <View
         style={{
           paddingHorizontal: 16 * safeScale,
@@ -158,7 +175,6 @@ export default function ConceptsTab({
         >
           Units & Concepts ({flattenedTopics.length})
         </Text>
-
         <View
           style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 * safeScale }}
         >
@@ -221,11 +237,12 @@ export default function ConceptsTab({
         </View>
       </View>
 
+      {/* FlatList - NO CHANGES */}
       <FlatList
         data={flattenedTopics}
         renderItem={({ item: topic, index }) => (
           <Pressable
-            onPress={() => handleTopicPress(topic, index)}
+            onPress={() => handleTopicPress(topic, index)} // ✅ Now navigates!
             style={({ pressed }) => ({
               marginHorizontal: 16 * safeScale,
               marginBottom: 16 * safeScale,
@@ -239,6 +256,7 @@ export default function ConceptsTab({
               opacity: pressed ? 0.95 : 1,
             })}
           >
+            {/* Your existing topic card content - NO CHANGES */}
             <View style={{ padding: 20 * safeScale }}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
@@ -340,16 +358,8 @@ export default function ConceptsTab({
         contentContainerStyle={{ paddingBottom: 40 * safeScale }}
       />
 
-      <TopicModal
-        visible={showTopicModal}
-        topic={selectedTopicForModal}
-        onClose={() => {
-          setShowTopicModal(false);
-          setSelectedTopicForModal(null);
-        }}
-        safeScale={safeScale}
-        cardRadius={cardRadius}
-      />
+      {/* ✅ DELETE THIS ENTIRE TopicModal BLOCK */}
+      {/* <TopicModal visible={showTopicModal} ... /> */}
     </View>
   );
 }

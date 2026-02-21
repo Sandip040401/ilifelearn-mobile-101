@@ -12,7 +12,7 @@ import {
   Pressable,
   Text,
   View,
-  useWindowDimensions
+  useWindowDimensions,
 } from "react-native";
 
 export default function SubjectContent() {
@@ -163,6 +163,8 @@ export default function SubjectContent() {
             textBody={textBody}
             iconSize={iconSize}
             iconRadius={iconRadius}
+            grade={grade} // ✅ ADD
+            subject={subject} // ✅ ADD
           />
         );
       case "videos":
