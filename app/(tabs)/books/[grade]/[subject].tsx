@@ -164,8 +164,8 @@ export default function SubjectContent() {
             textBody={textBody}
             iconSize={iconSize}
             iconRadius={iconRadius}
-            grade={grade} // ✅ ADD
-            subject={subject} // ✅ ADD
+            grade={grade}
+            subject={subject}
           />
         );
       case "videos":
@@ -221,6 +221,7 @@ export default function SubjectContent() {
               paddingHorizontal: 18 * safeScale,
             }}
           >
+            {/* Header gradient - NO three dots */}
             <View
               style={{
                 flexDirection: "row",
@@ -246,41 +247,50 @@ export default function SubjectContent() {
                   color="white"
                 />
               </TouchableOpacity>
-              <Text
-                style={{
-                  fontSize: 17 * safeScale,
-                  fontWeight: "bold",
-                  color: "white",
-                  flex: 1,
-                  textAlign: "center",
 
-                }}
-              >
-                {conceptsData?.subject?.name || subject}
-              </Text>
-              <Pressable
-                style={({ pressed }) => ({
-                  width: 44 * safeScale,
-                  height: 44 * safeScale,
-                  borderRadius: 12 * safeScale,
-                  backgroundColor: pressed
-                    ? "rgba(255,255,255,0.35)"
-                    : "rgba(255,255,255,0.25)",
+              {/* ✅ SUBJECT + GRADE HEADER */}
+              <View
+                style={{
+                  flex: 1,
                   alignItems: "center",
                   justifyContent: "center",
-                })}
+                  paddingHorizontal: 8 * safeScale,
+                }}
               >
-                <Ionicons
-                  name="ellipsis-vertical"
-                  size={20 * safeScale}
-                  color="white"
-                />
-              </Pressable>
+                {/* Main subject name */}
+                <Text
+                  style={{
+                    fontSize: 17 * safeScale,
+                    fontWeight: "bold",
+                    color: "white",
+                    textAlign: "center",
+                  }}
+                  numberOfLines={1}
+                >
+                  {conceptsData?.subject?.name || subject}
+                </Text>
+                {/* Grade + Subject subtitle */}
+                <Text
+                  style={{
+                    marginTop: 2 * safeScale,
+                    fontSize: 12 * safeScale,
+                    color: "rgba(255,255,255,0.85)",
+                    textAlign: "center",
+                  }}
+                  numberOfLines={1}
+                >
+                  {conceptsData?.grade?.name || grade} •{" "}
+                  {conceptsData?.subject?.name || subject}
+                </Text>
+              </View>
+
+              {/* ✅ Empty space for symmetry - NO three dots */}
+              <View style={{ width: 44 * safeScale, height: 44 * safeScale }} />
             </View>
           </LinearGradient>
         </View>
 
-        {/* 🎉 NEW TABS */}
+        {/* Tabs */}
         <View
           style={{
             flexDirection: "row",
