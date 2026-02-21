@@ -2,15 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle } from "react-native-svg";
 // ┌──────────────────────────────────────────────────────────────────────┐
-// │  REAL STT — uncomment when using a development build               │
-// │  Also remove the MOCK STT block further below.                     │
+// │  DYNAMIC STT — automatically switches between Expo Go and Native     │
 // └──────────────────────────────────────────────────────────────────────┘
-// import {
-//     ExpoSpeechRecognitionModule,
-//     useSpeechRecognitionEvent,
-// } from "expo-speech-recognition";
+import Constants, { AppOwnership } from "expo-constants";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+    Alert,
     Dimensions,
     Image,
     Modal,
@@ -45,6 +42,69 @@ import {
 } from "@/data/json/readAloudData";
 import { readAloudAttempts } from "@/services/readAloudService";
 import useAuthStore from "@/store/authStore";
+
+// ─────────────────────────────────────────────────────────────
+// Dynamic STT / Mocking Helpers
+// ─────────────────────────────────────────────────────────────
+const isExpoGo = Constants.appOwnership === AppOwnership.Expo;
+
+function RealSpeechEvents({
+    setIsRecording,
+    setTranscript,
+    setAnalysis,
+    startTimeRef,
+    readingTimeRef,
+    setReadingTime,
+}: any) {
+    // Only import the hooks if we are not in Expo Go, to prevent 'cannot find native module' errors at runtime
+    if (isExpoGo) return null;
+
+    let useSpeechRecognitionEvent;
+    try {
+        const SpeechModule = require("expo-speech-recognition");
+        useSpeechRecognitionEvent = SpeechModule.useSpeechRecognitionEvent;
+    } catch (e) {
+        return null; // Fallback just in case
+    }
+
+    if (!useSpeechRecognitionEvent) return null;
+
+    useSpeechRecognitionEvent("start", () => {
+        setIsRecording(true);
+        setTranscript("");
+        setAnalysis(null);
+        startTimeRef.current = Date.now();
+    });
+
+    useSpeechRecognitionEvent("end", () => {
+        setIsRecording(false);
+        if (startTimeRef.current) {
+            const duration = (Date.now() - startTimeRef.current) / 1000;
+            readingTimeRef.current = duration;
+            setReadingTime(duration);
+        }
+    });
+
+    useSpeechRecognitionEvent("result", (event: any) => {
+        const results = event.results;
+        // event.results contains alternative hypotheses for the recognized speech.
+        // Index 0 is the most confident hypothesis.
+        if (results && results.length > 0) {
+            const bestTranscript = results[0].transcript || "";
+            setTranscript(bestTranscript.trim());
+        }
+    });
+
+    useSpeechRecognitionEvent("error", (event: any) => {
+        setIsRecording(false);
+        console.warn("Speech recognition error:", event.error, event.message);
+        if (event.error !== "no-speech") {
+            Alert.alert("Speech Error", event.message || "Please try again.");
+        }
+    });
+
+    return null;
+}
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -745,54 +805,8 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
     }, [isAnalyzing, analysis, isTablet]);
 
     // ┌──────────────────────────────────────────────────────────────────────┐
-    // │  REAL STT — uncomment this block when using a development build     │
-    // │  and remove the MOCK STT block below.                               │
+    // │  REAL STT EVENT HOOKS ARE NOW RENDERED CONDITIONALLY                 │
     // └──────────────────────────────────────────────────────────────────────┘
-    // // ─────────────────────────────────────────────────────────
-    // // expo-speech-recognition event handlers
-    // // ─────────────────────────────────────────────────────────
-    // useSpeechRecognitionEvent("start", () => {
-    //     setIsRecording(true);
-    //     setTranscript("");
-    //     setAnalysis(null);
-    //     startTimeRef.current = Date.now();
-    // });
-    //
-    // useSpeechRecognitionEvent("end", () => {
-    //     setIsRecording(false);
-    //     if (startTimeRef.current) {
-    //         const duration = (Date.now() - startTimeRef.current) / 1000;
-    //         readingTimeRef.current = duration;
-    //         setReadingTime(duration);
-    //     }
-    // });
-    //
-    // useSpeechRecognitionEvent("result", (event) => {
-    //     const results = event.results;
-    //     if (results && results.length > 0) {
-    //         const latestResult = results[results.length - 1];
-    //         let fullTranscript = "";
-    //         for (const result of results) {
-    //             if (result.transcript) {
-    //                 fullTranscript += result.transcript + " ";
-    //             }
-    //         }
-    //         fullTranscript = fullTranscript.trim();
-    //         setTranscript(fullTranscript);
-    //         if (latestResult.confidence > 0 || !event.isFinal) {
-    //             // analysis triggered on "end" event
-    //         }
-    //     }
-    // });
-    //
-    // useSpeechRecognitionEvent("error", (event) => {
-    //     setIsRecording(false);
-    //     console.warn("Speech recognition error:", event.error, event.message);
-    //     if (event.error !== "no-speech") {
-    //         Alert.alert("Speech Error", event.message || "Please try again.");
-    //     }
-    // });
-
     // ─────────────────────────────────────────────────────────
     // Content logic
     // ─────────────────────────────────────────────────────────
@@ -854,55 +868,65 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
     const currentItem = content[currentIndex];
 
     // ┌──────────────────────────────────────────────────────────────────────┐
-    // │  REAL STT Recording — uncomment when using a development build      │
-    // │  and remove the MOCK STT Recording block below.                     │
-    // └──────────────────────────────────────────────────────────────────────┘
-    // const startRecording = async () => {
-    //     const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    //     if (!result.granted) {
-    //         Alert.alert(
-    //             "Permission Required",
-    //             "Microphone permission is needed for speech recognition."
-    //         );
-    //         return;
-    //     }
-    //     ExpoSpeechRecognitionModule.start({
-    //         lang: "en-US",
-    //         interimResults: true,
-    //         continuous: true,
-    //     });
-    // };
-    //
-    // const stopRecording = () => {
-    //     ExpoSpeechRecognitionModule.stop();
-    // };
-
-    // ┌──────────────────────────────────────────────────────────────────────┐
-    // │  MOCK STT — works in Expo Go. Comment out this block when switching  │
-    // │  to the real expo-speech-recognition above.                          │
+    // │  DYNAMIC RECORDING HANDLERS                                          │
     // └──────────────────────────────────────────────────────────────────────┘
     const startRecording = async () => {
-        // Simulate "recording started"
-        setIsRecording(true);
-        setTranscript("");
-        setAnalysis(null);
-        setMockText("");
-        startTimeRef.current = Date.now();
-        // Open text input modal so user can type what they "spoke"
-        setShowMockInput(true);
+        if (isExpoGo) {
+            // MOCK STT
+            setIsRecording(true);
+            setTranscript("");
+            setAnalysis(null);
+            setMockText("");
+            startTimeRef.current = Date.now();
+            setShowMockInput(true);
+        } else {
+            // REAL STT
+            try {
+                const { ExpoSpeechRecognitionModule } = require("expo-speech-recognition");
+                if (ExpoSpeechRecognitionModule) {
+                    const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+                    if (!result.granted) {
+                        Alert.alert(
+                            "Permission Required",
+                            "Microphone permission is needed for speech recognition."
+                        );
+                        return;
+                    }
+                    ExpoSpeechRecognitionModule.start({
+                        lang: "en-US",
+                        interimResults: true,
+                        continuous: true,
+                    });
+                }
+            } catch (e) {
+                console.warn("Native module not available");
+            }
+        }
     };
 
     const stopRecording = () => {
-        // Simulate "recording stopped"
-        setIsRecording(false);
-        setShowMockInput(false);
-        if (startTimeRef.current) {
-            const duration = (Date.now() - startTimeRef.current) / 1000;
-            readingTimeRef.current = duration;
-            setReadingTime(duration);
-        }
-        if (mockText.trim()) {
-            setTranscript(mockText.trim());
+        if (isExpoGo) {
+            // MOCK STT
+            setIsRecording(false);
+            setShowMockInput(false);
+            if (startTimeRef.current) {
+                const duration = (Date.now() - startTimeRef.current) / 1000;
+                readingTimeRef.current = duration;
+                setReadingTime(duration);
+            }
+            if (mockText.trim()) {
+                setTranscript(mockText.trim());
+            }
+        } else {
+            // REAL STT
+            try {
+                const { ExpoSpeechRecognitionModule } = require("expo-speech-recognition");
+                if (ExpoSpeechRecognitionModule) {
+                    ExpoSpeechRecognitionModule.stop();
+                }
+            } catch (e) {
+                console.warn("Native module not available");
+            }
         }
     };
 
@@ -1133,12 +1157,18 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
         setIsAnalyzing(false);
         setIsRecording(false);
         setShowAnalysisModal(false);
-        setShowMockInput(false); // MOCK STT — remove this line when using real STT
-        setMockText("");         // MOCK STT — remove this line when using real STT
+        setShowMockInput(false);
+        setMockText("");
         startTimeRef.current = null;
         readingTimeRef.current = 0;
-        // REAL STT — uncomment when using dev build:
-        // try { ExpoSpeechRecognitionModule.stop(); } catch { }
+        if (!isExpoGo) {
+            try {
+                const { ExpoSpeechRecognitionModule } = require("expo-speech-recognition");
+                if (ExpoSpeechRecognitionModule) {
+                    ExpoSpeechRecognitionModule.stop();
+                }
+            } catch { }
+        }
     };
 
     const retry = () => {
@@ -1220,6 +1250,16 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
     // ─────────────────────────────────────────────────────────
     return (
         <View className="flex-1 gap-6 py-2 pb-4">
+            {!isExpoGo && (
+                <RealSpeechEvents
+                    setIsRecording={setIsRecording}
+                    setTranscript={setTranscript}
+                    setAnalysis={setAnalysis}
+                    startTimeRef={startTimeRef}
+                    readingTimeRef={readingTimeRef}
+                    setReadingTime={setReadingTime}
+                />
+            )}
 
             {/* ── Main Content ── */}
             <View className={isTablet ? "flex-row flex-1" : "flex-1"} style={isTablet ? { gap: 0 } : undefined}>
