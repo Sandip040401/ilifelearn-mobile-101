@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -135,7 +136,7 @@ export default function ReadAloud() {
         colors={["#FF80B5", "#9089FC", "#3B82F6"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ flex: 1, width:"100%", height:'100%' }}
+        style={{ flex: 1, width: "100%", height: '100%' }}
       >
         <SafeAreaView style={{ flex: 1 }}>
           <View
@@ -247,14 +248,15 @@ export default function ReadAloud() {
 
   // ── Default: Mode selection + Analytics tabs ──
   return (
-    <LinearGradient
-      colors={["#FF80B5", "#9089FC", "#3B82F6"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1, width:"100%", height:'100%' }}
-      className="flex-1"
-    >
-      <SafeAreaView className="flex-1 bg-transparent">
+    <View className="flex-1 items-center justify-center w-full h-full">
+      <LinearGradient
+        colors={["#FF80B5", "#9089FC", "#3B82F6"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <SafeAreaView className="flex-1 bg-transparent w-full h-full">
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
@@ -473,6 +475,6 @@ export default function ReadAloud() {
           )}
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
