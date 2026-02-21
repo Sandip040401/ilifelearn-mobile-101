@@ -1,9 +1,28 @@
 // components/MediaViewer.tsx - Background tap DISABLED
 import { Ionicons } from "@expo/vector-icons";
-import { Video } from "expo-av";
-import { Image, Modal, TouchableOpacity, View } from "react-native";
-
-export default function MediaViewer({ media, onClose }) {
+import { useVideoPlayer, VideoView } from "expo-video";
+import { Image, Modal, Text, TouchableOpacity, View } from "react-native";
+const ActiveVideoPlayer = ({ url }: { url: string }) => {
+  const player = useVideoPlayer(url, (player) => {
+    player.loop = false;
+    // player.play() is not called initially, shouldPlay={false} was previously used
+  });
+  return (
+    <VideoView
+      player={player}
+      style={{ flex: 1, width: "100%" }}
+      allowsFullscreen
+      allowsPictureInPicture
+    />
+  );
+};
+export default function MediaViewer({
+  media,
+  onClose,
+}: {
+  media: { type: string; url?: string };
+  onClose: () => void;
+}) {
   return (
     <Modal
       visible={true}
@@ -66,14 +85,7 @@ export default function MediaViewer({ media, onClose }) {
             >
               <Ionicons name="close-outline" size={28} color="white" />
             </TouchableOpacity>
-            <Video
-              source={{ uri: media.url }}
-              style={{ flex: 1, width: "100%" }}
-              useNativeControls
-              resizeMode="contain"
-              shouldPlay={false}
-              isLooping={false}
-            />
+            <ActiveVideoPlayer url={media.url} />
           </View>
         )}
 

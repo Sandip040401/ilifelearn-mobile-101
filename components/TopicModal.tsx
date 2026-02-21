@@ -1,13 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Video } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useState } from "react";
 import {
-    Image,
-    Modal,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface TopicModalProps {
@@ -17,6 +17,25 @@ interface TopicModalProps {
   safeScale: number;
   cardRadius: number;
 }
+const ActiveVideoPlayer = ({ url }: { url: string }) => {
+  const player = useVideoPlayer(url, (player) => {
+    player.loop = false;
+    player.play();
+  });
+  return (
+    <VideoView
+      player={player}
+      style={{
+        width: "100%",
+        height: "100%",
+        maxWidth: 400,
+        maxHeight: 600,
+      }}
+      allowsFullscreen
+      allowsPictureInPicture
+    />
+  );
+};
 
 export default function TopicModal({
   visible,
@@ -25,9 +44,13 @@ export default function TopicModal({
   safeScale,
   cardRadius,
 }: TopicModalProps) {
-  const [activeMedia, setActiveMedia] = useState({
+  const [activeMedia, setActiveMedia] = useState<{
+    url: string;
+    type: "images" | "videos" | "worksheets" | "";
+    index: number;
+  }>({
     url: "",
-    type: "" as "images" | "videos" | "worksheets",
+    type: "",
     index: -1,
   });
 
@@ -37,7 +60,7 @@ export default function TopicModal({
 
   const openMedia = (
     url: string,
-    type: "images" | "videos" | "worksheets",
+    type: "images" | "videos" | "worksheets" | "",
     index: number,
   ) => {
     console.log("Opening media:", { url, type, index });
@@ -326,21 +349,9 @@ export default function TopicModal({
                 />
               )}
 
-              {activeMedia.type === "videos" && (
-                <Video
-                  source={{ uri: activeMedia.url }}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: 400,
-                    maxHeight: 600,
-                  }}
-                  useNativeControls
-                  resizeMode="contain"
-                  shouldPlay
-                  isLooping={false}
-                />
-              )}
+              {activeMedia.type === "videos" && activeMedia.url ? (
+                <ActiveVideoPlayer url={activeMedia.url} />
+              ) : null}
 
               {activeMedia.type === "worksheets" && (
                 <View

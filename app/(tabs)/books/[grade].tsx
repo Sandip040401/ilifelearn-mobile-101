@@ -148,6 +148,8 @@ export default function Grade() {
                   backgroundColor: `${subject.color}12`,
                   borderWidth: 1,
                   borderColor: `${subject.color}20`,
+                  borderRadius: cardRadius,
+                  overflow: "hidden"
                 }}
               >
                 <View className="flex-row items-start justify-between">
@@ -165,7 +167,7 @@ export default function Grade() {
                       }}
                     >
                       <Ionicons
-                        name={subject.icon}
+                        name={subject.icon as any}
                         size={28 * safeScale}
                         color="white"
                       />
@@ -236,7 +238,8 @@ const commonSubjects = [
   {
     id: "literacy",
     name: "Literacy readers",
-    desc: "12 activities",
+    desc: "Read, write & spell.",
+    subDesc: "12 activities",
     icon: "book",
     color: "#EF4444",
   },
@@ -270,19 +273,19 @@ const gradeData = {
   hummingbird: {
     name: "Hummingbird",
     subtitle: "Nursery",
-    gradient: ["#EC4899", "#F472B6"],
+    gradient: ["#EC4899", "#F472B6"] as const,
     bg: "#FEF7FF",
   },
   dove: {
     name: "Dove",
     subtitle: "Kindergarten",
-    gradient: ["#3B82F6", "#60A5FA"],
+    gradient: ["#3B82F6", "#60A5FA"] as const,
     bg: "#EFF6FF",
   },
   macaw: {
     name: "Macaw",
     subtitle: "Grade 1",
-    gradient: ["#F59E0B", "#FBBF24"],
+    gradient: ["#F59E0B", "#FBBF24"] as const,
     bg: "#FEF3C7",
   },
 };

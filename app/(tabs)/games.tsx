@@ -58,6 +58,7 @@ export default function Games() {
   const [activeGame, setActiveGame] = useState<any>(null);
   const [showKebabMenu, setShowKebabMenu] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const [iframeKey, setIframeKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -174,7 +175,9 @@ export default function Games() {
   };
 
   const handleReloadGame = () => {
-    if (webViewRef.current) {
+    if (Platform.OS === "web") {
+      setIframeKey((prev) => prev + 1);
+    } else if (webViewRef.current) {
       webViewRef.current.reload();
     }
     setShowKebabMenu(false);
@@ -379,37 +382,47 @@ export default function Games() {
           {Platform.OS === "ios" && <StatusBar hidden={true} />}
 
           {activeGame && (
-            <WebView
-              ref={webViewRef}
-              source={{ uri: activeGame.url }}
-              style={{ flex: 1, backgroundColor: 'black' }}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              allowsInlineMediaPlayback={true}
-              mediaPlaybackRequiresUserAction={false}
-              injectedJavaScript={`
-                (function() {
-                  window.close = function() {
-                    window.ReactNativeWebView.postMessage('closeGame');
-                  };
-                  window.history.back = function() {
-                    window.ReactNativeWebView.postMessage('closeGame');
-                  };
-                  window.addEventListener('message', function(event) {
-                    var msg = event.data;
-                    if (typeof msg === 'string' && (msg.toLowerCase() === 'close' || msg.toLowerCase() === 'exit' || msg.toLowerCase() === 'quit')) {
+            Platform.OS === "web" ? (
+              <iframe
+                key={iframeKey}
+                src={activeGame.url}
+                style={{ flex: 1, width: "100%", height: "100%", border: "none", backgroundColor: "black" }}
+                allow="autoplay; fullscreen; microphone; camera"
+                title={activeGame.title || "Game"}
+              />
+            ) : (
+              <WebView
+                ref={webViewRef}
+                source={{ uri: activeGame.url }}
+                style={{ flex: 1, backgroundColor: 'black' }}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                allowsInlineMediaPlayback={true}
+                mediaPlaybackRequiresUserAction={false}
+                injectedJavaScript={`
+                  (function() {
+                    window.close = function() {
                       window.ReactNativeWebView.postMessage('closeGame');
-                    }
-                  });
-                })();
-                true;
-              `}
-              onMessage={(event) => {
-                if (event.nativeEvent.data === 'closeGame') {
-                  handleCloseGame();
-                }
-              }}
-            />
+                    };
+                    window.history.back = function() {
+                      window.ReactNativeWebView.postMessage('closeGame');
+                    };
+                    window.addEventListener('message', function(event) {
+                      var msg = event.data;
+                      if (typeof msg === 'string' && (msg.toLowerCase() === 'close' || msg.toLowerCase() === 'exit' || msg.toLowerCase() === 'quit')) {
+                        window.ReactNativeWebView.postMessage('closeGame');
+                      }
+                    });
+                  })();
+                  true;
+                `}
+                onMessage={(event) => {
+                  if (event.nativeEvent.data === 'closeGame') {
+                    handleCloseGame();
+                  }
+                }}
+              />
+            )
           )}
 
           {/* Overlay to close kebab menu if clicking outside */}

@@ -7,7 +7,7 @@ import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 const scale = Math.min(screenWidth / 375, 1);
-const cardRadius = 24 * scale;
+const cardRadius = 25 * scale;
 const iconSize = 56 * scale;
 const iconRadius = 16 * scale;
 
@@ -104,6 +104,8 @@ export default function Books() {
                 backgroundColor: "rgba(16,185,129,0.1)",
                 borderWidth: 1,
                 borderColor: "rgba(16,185,129,0.3)",
+                borderRadius: cardRadius, 
+                overflow: "hidden"
               }}
             >
               <View className="flex-row items-center justify-between">
@@ -161,6 +163,8 @@ export default function Books() {
                 backgroundColor: "rgba(59,130,246,0.1)",
                 borderWidth: 1,
                 borderColor: "rgba(59,130,246,0.3)",
+                borderRadius: cardRadius, 
+                overflow: "hidden"
               }}
             >
               <View className="flex-row items-center justify-between">
@@ -214,6 +218,8 @@ export default function Books() {
                 backgroundColor: "rgba(245,158,11,0.1)",
                 borderWidth: 1,
                 borderColor: "rgba(245,158,11,0.3)",
+                borderRadius: cardRadius, 
+                overflow: "hidden"
               }}
             >
               <View className="flex-row items-center justify-between">

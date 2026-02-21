@@ -11,8 +11,9 @@ import {
   ActivityIndicator,
   Pressable,
   Text,
-  View,
+  TouchableOpacity,
   useWindowDimensions,
+  View,
 } from "react-native";
 
 export default function SubjectContent() {
@@ -227,25 +228,24 @@ export default function SubjectContent() {
                 justifyContent: "space-between",
               }}
             >
-              <Pressable
+              <TouchableOpacity
                 onPress={goBackToSubjects}
-                style={({ pressed }) => ({
+                activeOpacity={0.7}
+                style={{
                   width: 44 * safeScale,
                   height: 44 * safeScale,
                   borderRadius: 12 * safeScale,
-                  backgroundColor: pressed
-                    ? "rgba(255,255,255,0.35)"
-                    : "rgba(255,255,255,0.25)",
+                  backgroundColor: "rgba(255,255,255,0.25)",
                   alignItems: "center",
                   justifyContent: "center",
-                })}
+                }}
               >
                 <Ionicons
                   name="arrow-back"
                   size={20 * safeScale}
                   color="white"
                 />
-              </Pressable>
+              </TouchableOpacity>
               <Text
                 style={{
                   fontSize: 17 * safeScale,
@@ -253,7 +253,7 @@ export default function SubjectContent() {
                   color: "white",
                   flex: 1,
                   textAlign: "center",
-                  marginLeft: -30 * safeScale,
+
                 }}
               >
                 {conceptsData?.subject?.name || subject}
@@ -313,9 +313,9 @@ export default function SubjectContent() {
             >
               <Ionicons
                 name={
-                  activeTab === tab.id
+                  (activeTab === tab.id
                     ? tab.icon.replace("-outline", "")
-                    : tab.icon
+                    : tab.icon) as any
                 }
                 size={18 * safeScale}
                 color="#EC4899"

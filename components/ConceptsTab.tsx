@@ -56,12 +56,12 @@ export default function ConceptsTab({
   // const [showTopicModal, setShowTopicModal] = useState(false);
   // const [selectedTopicForModal, setSelectedTopicForModal] = useState<any>(null);
 
-  const volumeNumbers = conceptsData?.concepts
-    ? [
-        ...new Set(
-          conceptsData.concepts.map((c: any) => c.volumeNumber).filter(Boolean),
-        ),
-      ].sort((a, b) => a - b)
+  const volumeNumbers: number[] = conceptsData?.concepts
+    ? Array.from(
+      new Set<number>(
+        conceptsData.concepts.map((c: any) => c.volumeNumber).filter(Boolean),
+      ),
+    ).sort((a, b) => a - b)
     : [];
 
   // ✅ UPDATED - Navigate instead of modal
@@ -70,7 +70,7 @@ export default function ConceptsTab({
 
     // Navigate to topic page with topic data
     router.push({
-      pathname: `/books/${grade}/topic`,
+      pathname: `/books/${grade}/topic` as any,
       params: {
         topic: JSON.stringify(topic),
         safeScale: safeScale.toString(),

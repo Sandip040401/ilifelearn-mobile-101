@@ -878,8 +878,8 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
     // };
 
     // ┌──────────────────────────────────────────────────────────────────────┐
-    // │  MOCK STT — works in Expo Go. Remove this block when switching      │
-    // │  to the real expo-speech-recognition above.                         │
+    // │  MOCK STT — works in Expo Go. Comment out this block when switching  │
+    // │  to the real expo-speech-recognition above.                          │
     // └──────────────────────────────────────────────────────────────────────┘
     const startRecording = async () => {
         // Simulate "recording started"
@@ -1418,7 +1418,7 @@ export default function ReadAloudPractice({ initialMode, selectedAge, selectedCu
             </View>
 
             {/* ┌──────────────────────────────────────────────────────────────────────┐ */}
-            {/* │  MOCK STT Input Modal — Comment out this entire block when switching     │ */}
+            {/* │  MOCK STT Input Modal — Comment out this entire block when switching │ */}
             {/* │  to real expo-speech-recognition.                                    │ */}
             {/* └──────────────────────────────────────────────────────────────────────┘ */}
             <Modal
