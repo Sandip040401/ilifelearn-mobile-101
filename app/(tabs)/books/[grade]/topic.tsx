@@ -2,13 +2,13 @@ import MediaViewer from "@/components/MediaViewer";
 import SafeAreaView from "@/components/SafeAreaView";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
-    ScrollView,
-    StatusBar,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function TopicScreen() {
@@ -16,11 +16,16 @@ export default function TopicScreen() {
   const params = useLocalSearchParams();
   const { topic, safeScale = "1", cardRadius = "20" } = params;
 
-  const parsedTopic = JSON.parse(topic);
-  const scale = Number(safeScale);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const parsedTopic = JSON.parse((topic as string) || "{}");
+  const scale = Number(safeScale as string);
+  const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: string } | null>(null);
 
-  const renderContentSection = (title, items, icon, type) => {
+  const renderContentSection = (
+    title: string,
+    items: string[],
+    icon: React.ComponentProps<typeof Ionicons>["name"],
+    type: string
+  ) => {
     // ✅ FIXED ABOVE
     if (!items?.length) return null;
     return (
