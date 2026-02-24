@@ -1,4 +1,5 @@
 export * from "./activityService";
+export * from "./arService";
 export * from "./authService";
 export * from "./chatService";
 export * from "./conceptService";
