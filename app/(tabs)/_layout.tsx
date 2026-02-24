@@ -6,10 +6,7 @@ export default function TabLayout() {
   const { isAuthenticated, isHydrated } = useAuthStore();
 
   if (!isHydrated) return null;
-
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
-  }
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs
@@ -73,13 +70,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="books"
         options={{
-          title: "📚 Books",
+          title: "Books",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="book" size={size} color={color} />
           ),
-          tabBarLabel: "Books",
         }}
       />
+
+      {/* ✅ Hide these from tab bar */}
+      <Tabs.Screen name="[folderId]" options={{ href: null }} />
+      <Tabs.Screen name="webvr-viewer" options={{ href: null }} />
     </Tabs>
   );
 }
