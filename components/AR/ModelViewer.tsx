@@ -6,7 +6,9 @@ import {
 } from '@/services/arService';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'expo-image';
+import * as IntentLauncher from 'expo-intent-launcher';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -137,6 +139,9 @@ export default function ModelViewer({
     const [showTargetPainter, setShowTargetPainter] = useState(false);
     const [animations, setAnimations] = useState<string[]>([]);
     const [selectedAnimation, setSelectedAnimation] = useState<string | null>(null);
+
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportStatusText, setExportStatusText] = useState('');
 
     const sheetWebViewRef = useRef<WebView>(null);
 
@@ -309,17 +314,69 @@ export default function ModelViewer({
 
     // AR launch via system
     const handleOpenAR = () => {
+        if (textureDisplayMode !== 'original') {
+            setIsExporting(true);
+            setExportStatusText('Preparing Custom AR Model...');
+            webViewRef.current?.postMessage(JSON.stringify({ type: 'exportGLB' }));
+            return;
+        }
+        launchARWithUrl(modelFileUrl);
+    };
+
+    const launchARWithUrl = async (url: string) => {
         if (Platform.OS === 'android') {
-            const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(modelFileUrl)}&mode=ar_preferred&title=${encodeURIComponent(model?.name || '3D Model')}`;
-            Linking.openURL(`intent://arvr.google.com/scene-viewer/1.2?mode=ar_preferred&file=${encodeURIComponent(modelFileUrl)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;`).catch(() => {
+            const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(url)}&mode=ar_preferred&title=${encodeURIComponent(model?.name || '3D Model')}`;
+            Linking.openURL(`intent://arvr.google.com/scene-viewer/1.2?mode=ar_preferred&file=${encodeURIComponent(url)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;`).catch(() => {
                 Linking.openURL(sceneViewerUrl);
             });
         } else {
             // iOS - use USDZ Quick Look if available, or model-viewer's AR
-            const quickLookUrl = modelFileUrl;
+            const quickLookUrl = url;
             Linking.openURL(quickLookUrl).catch(() => {
                 console.warn('Could not open AR on iOS');
             });
+        }
+    };
+
+    const handleExportedGLB = async (base64: string) => {
+        const tempPath = FileSystem.cacheDirectory + 'custom_model.glb';
+        try {
+            setExportStatusText('Saving file for AR...');
+
+            // Clean up any old export first
+            await FileSystem.deleteAsync(tempPath, { idempotent: true });
+            await FileSystem.writeAsStringAsync(tempPath, base64, { encoding: FileSystem.EncodingType.Base64 });
+
+            if (Platform.OS === 'android') {
+                const contentUri = await FileSystem.getContentUriAsync(tempPath);
+                setIsExporting(false);
+
+                try {
+                    // Start Google Scene Viewer and wait for it to finish
+                    await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+                        data: contentUri,
+                        packageName: 'com.google.android.googlequicksearchbox',
+                        flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+                    });
+                } catch {
+                    // Fallback to generic 3D view if Scene Viewer isn't installed
+                    await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+                        data: contentUri,
+                        type: 'model/gltf-binary',
+                        flags: 1,
+                    });
+                }
+
+                // Cleanup after the user exits AR mode
+                await FileSystem.deleteAsync(tempPath, { idempotent: true });
+            } else {
+                setIsExporting(false);
+                Linking.openURL(tempPath).catch(() => console.warn('QuickLook failed'));
+            }
+        } catch (err) {
+            setIsExporting(false);
+            console.warn('Export save failed:', err);
+            FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => { });
         }
     };
 
@@ -386,6 +443,18 @@ export default function ModelViewer({
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    function arrayBufferToBase64(buffer) {
+        return new Promise((resolve) => {
+            const blob = new Blob([buffer], { type: 'application/octet-stream' });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                resolve(reader.result.split(',')[1]);
+            };
+            reader.readAsDataURL(blob);
+        });
+    }
 
     const status = document.getElementById('status');
     const paintIndicator = document.getElementById('paintIndicator');
@@ -446,6 +515,7 @@ export default function ModelViewer({
     let brushColor = '#ff0000'; // Default, synced via messaging
     let brushSize = 12; // Default, synced via messaging
     let pointerDown = false;
+    let isPlaying = true;
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const lastPoints = new Map();
@@ -485,6 +555,7 @@ export default function ModelViewer({
                 window._gltfAnimations = gltf.animations;
                 const names = gltf.animations.map(a => a.name || 'Action');
                 postMsg({ type: 'animations', list: names });
+                window._currentAnimation = gltf.animations[0];
                 const action = mixer.clipAction(gltf.animations[0]);
                 action.play();
             }
@@ -590,8 +661,9 @@ export default function ModelViewer({
             const data = JSON.parse(event.data);
             if (data.type === 'toggleRotate') controls.autoRotate = data.value;
             if (data.type === 'togglePlay') {
+                isPlaying = data.value;
                 if (mixer) {
-                    mixer._actions.forEach(a => { data.value ? a.play() : a.stop(); });
+                    mixer.timeScale = isPlaying ? 1 : 0;
                 }
             }
             if (data.type === 'setAnimation') {
@@ -599,9 +671,10 @@ export default function ModelViewer({
                     mixer.stopAllAction();
                     const clip = window._gltfAnimations.find(a => (a.name || 'Action') === data.value);
                     if (clip) {
+                        window._currentAnimation = clip;
                         const action = mixer.clipAction(clip);
                         action.play();
-                        if (!isPlaying) action.stop(); // respect global play state
+                        mixer.timeScale = isPlaying ? 1 : 0;
                     }
                 }
             }
@@ -669,6 +742,28 @@ export default function ModelViewer({
                     }
                 };
                 img.src = data.dataUrl;
+            }
+            if (data.type === 'exportGLB') {
+                if (!loadedModel) return;
+                postMsg({ type: 'exportStatus', status: 'Exporting 3D scene... (this may take a moment)' });
+                const exporter = new GLTFExporter();
+                const exportAnims = window._currentAnimation ? [window._currentAnimation] : (window._gltfAnimations || []);
+                exporter.parse(
+                    loadedModel,
+                    async function(gltf) {
+                        postMsg({ type: 'exportStatus', status: 'Converting file format...' });
+                        try {
+                            const base64 = await arrayBufferToBase64(gltf);
+                            postMsg({ type: 'glbData', base64: base64 });
+                        } catch (e) {
+                            postMsg({ type: 'error', message: 'Base64 conversion failed: ' + e.message });
+                        }
+                    },
+                    function(error) {
+                        postMsg({ type: 'error', message: 'Export failed: ' + error });
+                    },
+                    { binary: true, animations: exportAnims } // Include isolated selected animation
+                );
             }
         } catch (e) {}
     }
@@ -997,10 +1092,20 @@ export default function ModelViewer({
                         try {
                             const data = JSON.parse(event.nativeEvent.data);
                             if (data.type === 'loaded') setLoadingModel(false);
-                            else if (data.type === 'error') { console.warn('Model error:', data.message); setLoadingModel(false); }
+                            else if (data.type === 'error') {
+                                console.warn('Model error:', data.message);
+                                setLoadingModel(false);
+                                setIsExporting(false);
+                            }
                             else if (data.type === 'animations') {
                                 setAnimations(data.list || []);
                                 if (data.list && data.list.length > 0) setSelectedAnimation(data.list[0]);
+                            }
+                            else if (data.type === 'exportStatus') {
+                                setExportStatusText(data.status);
+                            }
+                            else if (data.type === 'glbData') {
+                                handleExportedGLB(data.base64);
                             }
                         } catch (e) { }
                     }}
@@ -1013,6 +1118,15 @@ export default function ModelViewer({
                     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(11,18,38,0.7)' }}>
                         <ActivityIndicator size="large" color="#6C4CFF" />
                         <Text style={{ marginTop: 12, color: '#fff', fontSize: 14, fontWeight: '600' }}>Loading 3D Model...</Text>
+                    </View>
+                )}
+
+                {/* Exporting Overlay */}
+                {isExporting && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(11,18,38,0.85)', zIndex: 100 }}>
+                        <ActivityIndicator size="large" color="#DA70D6" />
+                        <Text style={{ marginTop: 12, color: '#fff', fontSize: 16, fontWeight: '700' }}>{exportStatusText || 'Preparing AR...'}</Text>
+                        <Text style={{ marginTop: 8, color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>Please keep the app open</Text>
                     </View>
                 )}
             </View>
