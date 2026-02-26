@@ -76,19 +76,67 @@ export function WebVRViewerModal({
   const [mode, setMode] = useState<"audio" | "video">("audio");
   const [isMuted, setIsMuted] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [canStartPlayback, setCanStartPlayback] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [selectedLanguage, setSelectedLang] = useState("");
   const [selectedDifficulty, setSelectedDiff] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(false);
+  const [videoViewMounted, setVideoViewMounted] = useState(false); // ← track mount
 
   const drawerAnim = useRef(new Animated.Value(0)).current;
   const headerAnim = useRef(new Animated.Value(0)).current;
-  const pendingPlay = useRef(false); // ← audio waiting for video to be ready
+  const lastAudioUrl = useRef<string | null>(null);
+  const canStartPlaybackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const isClosing = useRef(false);
+
+  // ── Player: created lazily, only when videoUrl is known ──
+  // Use a ref so it persists across renders without re-creating
+  const playerRef = useRef<ReturnType<typeof createVideoPlayer> | null>(null);
+
+  // Always get/create the player for current videoUrl
+  const getPlayer = useCallback(() => {
+    if (!videoUrl) return null;
+    if (!playerRef.current) {
+      playerRef.current = createVideoPlayer({ uri: videoUrl });
+    }
+    return playerRef.current;
+  }, [videoUrl]);
+
+  // Recreate player when videoUrl changes
+  const lastVideoUrlRef = useRef("");
+  if (videoUrl && videoUrl !== lastVideoUrlRef.current) {
+    lastVideoUrlRef.current = videoUrl;
+    if (playerRef.current) {
+      try {
+        playerRef.current.release();
+      } catch {}
+      playerRef.current = null;
+    }
+    if (videoUrl) {
+      playerRef.current = createVideoPlayer({ uri: videoUrl });
+    }
+  }
+
+  // ── Release on unmount ──
+  useEffect(() => {
+    return () => {
+      if (canStartPlaybackTimerRef.current)
+        clearTimeout(canStartPlaybackTimerRef.current);
+      if (playerRef.current) {
+        try {
+          playerRef.current.release();
+        } catch {}
+        playerRef.current = null;
+      }
+    };
+  }, []);
 
   // ── Header show/hide ──
-  const showHeader = () => {
+  const showHeader = useCallback(() => {
     setHeaderVisible(true);
     Animated.spring(headerAnim, {
       toValue: 1,
@@ -96,28 +144,33 @@ export function WebVRViewerModal({
       tension: 80,
       friction: 12,
     }).start();
-  };
+  }, [headerAnim]);
 
-  const hideHeader = () => {
+  const closeMenu = useCallback(() => {
+    Animated.timing(drawerAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setMenuOpen(false));
+  }, [drawerAnim]);
+
+  const hideHeader = useCallback(() => {
     Animated.timing(headerAnim, {
       toValue: 0,
       duration: 200,
       useNativeDriver: true,
     }).start(() => {
       setHeaderVisible(false);
-      if (menuOpen) closeMenu();
+      closeMenu();
     });
-  };
+  }, [headerAnim, closeMenu]);
 
-  const toggleHeader = () => {
-    if (headerVisible) {
-      hideHeader();
-    } else {
-      showHeader();
-    }
-  };
+  const toggleHeader = useCallback(() => {
+    if (headerVisible) hideHeader();
+    else showHeader();
+  }, [headerVisible, hideHeader, showHeader]);
 
-  const openMenu = () => {
+  const openMenu = useCallback(() => {
     setMenuOpen(true);
     Animated.spring(drawerAnim, {
       toValue: 1,
@@ -125,93 +178,13 @@ export function WebVRViewerModal({
       tension: 80,
       friction: 12,
     }).start();
-  };
+  }, [drawerAnim]);
 
-  const closeMenu = () => {
-    Animated.timing(drawerAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setMenuOpen(false));
-  };
+  // ── expo-audio ──
+  const [selectedLanguage_s, setSelectedLang_s] = useState("");
+  const [selectedDifficulty_s, setSelectedDiff_s] = useState("");
 
-  // ── Player: recreate when videoUrl changes ──
-  const videoUrlRef = useRef(videoUrl);
-  const playerRef = useRef(
-    createVideoPlayer(videoUrl ? { uri: videoUrl } : null),
-  );
-
-  if (videoUrl !== videoUrlRef.current) {
-    videoUrlRef.current = videoUrl;
-    try {
-      playerRef.current.release();
-    } catch {}
-    playerRef.current = createVideoPlayer(videoUrl ? { uri: videoUrl } : null);
-  }
-
-  const player = playerRef.current;
-
-  // ── Release on unmount only ──
-  useEffect(() => {
-    return () => {
-      try {
-        playerRef.current.release();
-      } catch {}
-    };
-  }, []);
-
-  // ── Close handler ──
-  const isClosing = useRef(false);
-  const handleClose = useCallback(() => {
-    if (isClosing.current) return;
-    isClosing.current = true;
-    try {
-      audioPlayer?.pause();
-    } catch {}
-    try {
-      player.pause();
-    } catch {}
-    closeMenu();
-    onClose();
-    ScreenOrientation.lockAsync(
-      ScreenOrientation.OrientationLock.PORTRAIT_UP,
-    ).catch(() => {});
-    setTimeout(() => {
-      isClosing.current = false;
-    }, 500);
-  }, [onClose, audioPlayer, player]);
-
-  // ── Modal open/close lifecycle ──
-  useEffect(() => {
-    if (visible) {
-      isClosing.current = false;
-      pendingPlay.current = false; // ← reset sync flag
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-      setMode("audio");
-      setIsMuted(false);
-      setVideoReady(false);
-      setVideoError(false);
-      setIsSwitching(false);
-      setMenuOpen(false);
-      setHeaderVisible(false);
-      drawerAnim.setValue(0);
-      headerAnim.setValue(0);
-      if (videoUrl) {
-        try {
-          player.loop = true;
-          player.muted = true;
-          player.currentTime = 0;
-        } catch {}
-        player.play();
-      }
-    } else {
-      try {
-        player.pause();
-      } catch {}
-    }
-  }, [visible, videoUrl]);
-
-  // ─── Data maps ───────────────────────────────
+  // ─── Data maps ───
   const byLanguage = useMemo(() => {
     return audioFiles.reduce((acc: any, a: any) => {
       const lang = norm(a.language || a.keyword);
@@ -279,48 +252,94 @@ export function WebVRViewerModal({
     });
   }, [selectedLanguage, byLanguage]);
 
-  // ── expo-audio ──
   const audioPlayer = useAudioPlayer(
     selectedAudioObj?.url && mode === "audio" && visible
       ? { uri: selectedAudioObj.url }
       : null,
   );
-  const lastAudioUrl = useRef<string | null>(null);
 
-  // ── Audio play — gated on videoReady for sync ──
+  // ── Modal open/close lifecycle ──
   useEffect(() => {
-    if (!audioPlayer || mode !== "audio" || !selectedAudioObj?.url || !visible)
-      return;
+    if (visible) {
+      isClosing.current = false;
+      if (canStartPlaybackTimerRef.current)
+        clearTimeout(canStartPlaybackTimerRef.current);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      setMode("audio");
+      setIsMuted(false);
+      setVideoReady(false);
+      setCanStartPlayback(false);
+      setVideoError(false);
+      setIsSwitching(false);
+      setMenuOpen(false);
+      setHeaderVisible(false);
+      setVideoViewMounted(false); // ← reset mount flag
+      drawerAnim.setValue(0);
+      headerAnim.setValue(0);
+      lastAudioUrl.current = null;
+      // ⚠️ Do NOT call player.play() here — VideoView isn't mounted yet
+      // Play is triggered by onVideoViewMount effect below
+    } else {
+      if (canStartPlaybackTimerRef.current)
+        clearTimeout(canStartPlaybackTimerRef.current);
+      const p = playerRef.current;
+      if (p) {
+        try {
+          p.pause();
+        } catch {}
+      }
+      try {
+        audioPlayer?.pause();
+      } catch {}
+      lastAudioUrl.current = null;
+    }
+  }, [visible]);
+
+  // ── Start video AFTER VideoView is confirmed mounted ──
+  // This is the fix: wait for videoViewMounted before calling play()
+  useEffect(() => {
+    if (!videoViewMounted || !videoUrl || !visible) return;
+    const p = playerRef.current;
+    if (!p) return;
+    try {
+      p.loop = true;
+      p.muted = true;
+      p.currentTime = 0;
+      p.play();
+    } catch (e) {
+      console.warn("Video play error:", e);
+      setVideoError(true);
+    }
+  }, [videoViewMounted, videoUrl, visible]);
+
+  // ── Audio: fires when canStartPlayback opens (initial load) ──
+  useEffect(() => {
+    if (!canStartPlayback || !visible || mode !== "audio") return;
+    if (!audioPlayer || !selectedAudioObj?.url) return;
     if (lastAudioUrl.current === selectedAudioObj.url) return;
     lastAudioUrl.current = selectedAudioObj.url;
-    const t = setTimeout(() => {
-      try {
-        audioPlayer.loop = true;
-        audioPlayer.volume = isMuted ? 0 : 1;
-        // ✅ If video is ready (or no video), play immediately
-        // ✅ If video still loading, mark pending and wait
-        if (videoReady || !videoUrl) {
-          audioPlayer.play();
-          pendingPlay.current = false;
-        } else {
-          pendingPlay.current = true; // video will trigger play when ready
-        }
-      } catch {}
-      setIsSwitching(false);
-    }, 80);
-    return () => clearTimeout(t);
-  }, [audioPlayer, selectedAudioObj?.url, mode, visible, videoReady, videoUrl]);
+    try {
+      audioPlayer.loop = true;
+      audioPlayer.volume = isMuted ? 0 : 1;
+      audioPlayer.play();
+    } catch {}
+    setIsSwitching(false);
+  }, [canStartPlayback, visible, audioPlayer, selectedAudioObj?.url, mode]);
 
-  // ── Release pending audio play when video becomes ready ──
+  // ── Audio: fires when lang/diff changes after already loaded ──
   useEffect(() => {
-    if (!videoReady) return;
-    if (pendingPlay.current && audioPlayer && mode === "audio") {
-      pendingPlay.current = false;
-      try {
-        audioPlayer.play();
-      } catch {}
-    }
-  }, [videoReady]);
+    if (!canStartPlayback || !visible || mode !== "audio") return;
+    if (!audioPlayer || !selectedAudioObj?.url) return;
+    if (lastAudioUrl.current === selectedAudioObj.url) return;
+    lastAudioUrl.current = selectedAudioObj.url;
+    setIsSwitching(true);
+    try {
+      audioPlayer.loop = true;
+      audioPlayer.volume = isMuted ? 0 : 1;
+      audioPlayer.play();
+    } catch {}
+    setTimeout(() => setIsSwitching(false), 150);
+  }, [selectedAudioObj?.url]);
 
   // ── Mute sync ──
   useEffect(() => {
@@ -333,7 +352,7 @@ export function WebVRViewerModal({
   // ── Pause audio when modal closes ──
   useEffect(() => {
     if (!visible) {
-      pendingPlay.current = false;
+      lastAudioUrl.current = null;
       try {
         audioPlayer?.pause();
       } catch {}
@@ -342,12 +361,37 @@ export function WebVRViewerModal({
 
   // ── Video mute sync ──
   useEffect(() => {
+    const p = playerRef.current;
+    if (!p) return;
     try {
-      player.muted = mode === "audio" ? true : isMuted;
+      p.muted = mode === "audio" ? true : isMuted;
     } catch {}
   }, [mode, isMuted]);
 
-  // ── Mode switch — debounced ──
+  // ── Close handler ──
+  const handleClose = useCallback(() => {
+    if (isClosing.current) return;
+    isClosing.current = true;
+    try {
+      audioPlayer?.pause();
+    } catch {}
+    const p = playerRef.current;
+    if (p) {
+      try {
+        p.pause();
+      } catch {}
+    }
+    closeMenu();
+    onClose();
+    ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.PORTRAIT_UP,
+    ).catch(() => {});
+    setTimeout(() => {
+      isClosing.current = false;
+    }, 500);
+  }, [onClose, audioPlayer, closeMenu]);
+
+  // ── Mode switch ──
   const switchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleModeChange = useCallback(
     (newMode: "audio" | "video") => {
@@ -356,21 +400,29 @@ export function WebVRViewerModal({
       setIsSwitching(true);
       setMode(newMode);
       switchDebounce.current = setTimeout(() => {
+        const p = playerRef.current;
         try {
           if (newMode === "video") {
-            audioPlayer?.pause();
-            player.muted = isMuted;
-            player.currentTime = 0;
-            if (!player.playing) player.play();
+            try {
+              audioPlayer?.pause();
+            } catch {}
+            if (p) {
+              p.muted = isMuted;
+              p.currentTime = 0;
+              if (!p.playing) p.play();
+            }
           } else {
-            player.muted = true;
-            if (!player.playing) player.play();
+            lastAudioUrl.current = null;
+            if (p) {
+              p.muted = true;
+              if (!p.playing) p.play();
+            }
           }
         } catch {}
         setIsSwitching(false);
       }, 150);
     },
-    [mode, audioPlayer, player, isMuted],
+    [mode, audioPlayer, isMuted],
   );
 
   const handleLangChange = useCallback(
@@ -394,16 +446,19 @@ export function WebVRViewerModal({
   );
 
   const handleRestart = useCallback(() => {
+    const p = playerRef.current;
     try {
-      player.currentTime = 0;
-      if (!player.playing) player.play();
+      if (p) {
+        p.currentTime = 0;
+        if (!p.playing) p.play();
+      }
       if (mode === "audio" && audioPlayer) {
         lastAudioUrl.current = null;
         audioPlayer.seekTo(0);
         audioPlayer.play();
       }
     } catch {}
-  }, [player, audioPlayer, mode]);
+  }, [audioPlayer, mode]);
 
   const sideInset = Math.max(insets.left, insets.right, 12);
 
@@ -417,6 +472,8 @@ export function WebVRViewerModal({
     outputRange: [-60, 0],
   });
 
+  const player = playerRef.current;
+
   return (
     <Modal
       visible={visible}
@@ -428,22 +485,33 @@ export function WebVRViewerModal({
       <StatusBar hidden />
       <View style={styles.root}>
         {/* ── VIDEO ── */}
-        {videoUrl ? (
+        {videoUrl && player ? (
           <VideoView
             player={player}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             nativeControls={false}
-            onFirstFrameRender={() => setVideoReady(true)}
+            onLayout={() => {
+              // ← VideoView is now in the DOM/layout tree — safe to call play
+              if (!videoViewMounted) setVideoViewMounted(true);
+            }}
+            onFirstFrameRender={() => {
+              setVideoReady(true);
+              if (canStartPlaybackTimerRef.current)
+                clearTimeout(canStartPlaybackTimerRef.current);
+              canStartPlaybackTimerRef.current = setTimeout(() => {
+                setCanStartPlayback(true);
+              }, 100);
+            }}
           />
-        ) : (
+        ) : !videoUrl ? (
           <View style={styles.noVideo}>
             <Text style={{ fontSize: 48 }}>🌐</Text>
             <Text style={styles.noVideoText}>No video content available</Text>
           </View>
-        )}
+        ) : null}
 
-        {/* ── PULL TAB — always visible at top center ── */}
+        {/* ── PULL TAB ── */}
         <TouchableOpacity
           onPress={toggleHeader}
           style={styles.pullTab}
@@ -456,7 +524,7 @@ export function WebVRViewerModal({
           />
         </TouchableOpacity>
 
-        {/* ── HEADER — slides down when visible ── */}
+        {/* ── HEADER ── */}
         {headerVisible && (
           <Animated.View
             style={[
@@ -635,7 +703,7 @@ export function WebVRViewerModal({
         )}
 
         {/* ── Loading overlay ── */}
-        {!videoReady && !videoError && videoUrl && (
+        {!canStartPlayback && !videoError && videoUrl && (
           <View style={[styles.overlay, { zIndex: 10 }]}>
             <ActivityIndicator size="large" color="#4ECDC4" />
             <Text style={styles.overlayText}>Loading WebVR Experience...</Text>
@@ -663,6 +731,19 @@ export function WebVRViewerModal({
               onPress={() => {
                 setVideoError(false);
                 setVideoReady(false);
+                setCanStartPlayback(false);
+                setVideoViewMounted(false);
+                // Recreate the player for retry
+                if (playerRef.current) {
+                  try {
+                    playerRef.current.release();
+                  } catch {}
+                  playerRef.current = null;
+                }
+                if (videoUrl) {
+                  playerRef.current = createVideoPlayer({ uri: videoUrl });
+                  setVideoViewMounted(true); // re-trigger mount effect
+                }
               }}
               style={styles.retryBtn}
             >
@@ -689,8 +770,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginTop: 12,
   },
-
-  // ── Pull tab — always visible at top center ──
   pullTab: {
     position: "absolute",
     top: 0,
@@ -704,8 +783,6 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 6,
   },
-
-  // ── Header — slides down from top ──
   header: {
     position: "absolute",
     top: 0,
@@ -730,7 +807,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconBtnActive: { backgroundColor: "rgba(255,255,255,0.25)" },
-
   drawerBackdrop: { ...StyleSheet.absoluteFillObject, zIndex: 19 },
   drawer: {
     position: "absolute",
