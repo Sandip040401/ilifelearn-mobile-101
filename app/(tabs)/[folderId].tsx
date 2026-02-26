@@ -1,10 +1,12 @@
-// app/(tabs)/[folderId].tsx - Simplified to show only assets
+// app/(tabs)/[folderId].tsx
 import SafeAreaView from "@/components/SafeAreaView";
+import { WebVRViewerModal } from "@/components/WebVRViewerModal"; // move modal to components
 import { fetchWebVRContent } from "@/services/webVRService";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    BackHandler,
     FlatList,
     ScrollView,
     Text,
@@ -20,6 +22,7 @@ export default function EnvironmentDetail() {
 
   const [environment, setEnvironment] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const [selectedAsset, setSelectedAsset] = useState<any>(null); // ← modal state
 
   useEffect(() => {
     const fetchEnvironment = async () => {
@@ -37,19 +40,27 @@ export default function EnvironmentDetail() {
     if (folderId) fetchEnvironment();
   }, [folderId]);
 
+  // ✅ Hardware back: close modal first, then navigate
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (selectedAsset) {
+        setSelectedAsset(null); // close modal
+        return true; // consume event, navigator doesn't fire
+      }
+      return false; // let navigator handle normal back
+    });
+    return () => sub.remove();
+  }, [selectedAsset]);
+
   const assets = environment.topics || [];
 
+  // ✅ No router.push — just open modal
   const handleAssetPress = (asset: any) => {
-    // Navigate to WebVR viewer with asset data
-    router.push({
-      pathname: "/(tabs)/webvr-viewer",
-      params: {
-        assetId: asset._id,
-        assetTitle: asset.title,
-        assetData: JSON.stringify(asset), // Pass entire asset
-        folderName: folderName,
-      },
-    });
+    setSelectedAsset(asset);
+  };
+
+  const handleModalClose = () => {
+    setSelectedAsset(null);
   };
 
   const renderAsset = ({ item }: { item: any }) => (
@@ -68,7 +79,6 @@ export default function EnvironmentDetail() {
       }}
       onPress={() => handleAssetPress(item)}
     >
-      {/* Image placeholder */}
       <View
         style={{
           height: 160,
@@ -79,8 +89,6 @@ export default function EnvironmentDetail() {
       >
         <Text style={{ fontSize: 64 }}>{item.icon || "📚"}</Text>
       </View>
-
-      {/* Content */}
       <View style={{ padding: 16 }}>
         <Text
           style={{
@@ -94,17 +102,11 @@ export default function EnvironmentDetail() {
           {item.title}
         </Text>
         <Text
-          style={{
-            fontSize: 13,
-            color: "#64748B",
-            lineHeight: 18,
-          }}
+          style={{ fontSize: 13, color: "#64748B", lineHeight: 18 }}
           numberOfLines={2}
         >
           {item.description || "Explore this immersive learning experience"}
         </Text>
-
-        {/* WebVR badge */}
         {item.webvr?.length > 0 && (
           <View
             style={{
@@ -157,7 +159,7 @@ export default function EnvironmentDetail() {
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
       >
-        {/* Back button */}
+        {/* ✅ Fixed: router.back() not router.push() */}
         <TouchableOpacity
           activeOpacity={0.8}
           style={{
@@ -176,10 +178,6 @@ export default function EnvironmentDetail() {
               justifyContent: "center",
               alignItems: "center",
               marginRight: 12,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 4,
               elevation: 2,
             }}
           >
@@ -190,7 +188,6 @@ export default function EnvironmentDetail() {
           </Text>
         </TouchableOpacity>
 
-        {/* Header */}
         <View
           style={{
             height: 120,
@@ -199,10 +196,6 @@ export default function EnvironmentDetail() {
             justifyContent: "center",
             padding: 24,
             marginBottom: 24,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 8,
             elevation: 4,
           }}
         >
@@ -221,7 +214,6 @@ export default function EnvironmentDetail() {
           </Text>
         </View>
 
-        {/* Assets grid */}
         <Text
           style={{
             fontSize: 20,
@@ -254,12 +246,18 @@ export default function EnvironmentDetail() {
             <Text style={{ fontSize: 16, fontWeight: "600", color: "#64748B" }}>
               No assets available
             </Text>
-            <Text style={{ fontSize: 13, color: "#94A3B8", marginTop: 4 }}>
-              Check back later for new content
-            </Text>
           </View>
         )}
       </ScrollView>
+
+      {/* ✅ Modal lives here — no route needed */}
+      <WebVRViewerModal
+        visible={!!selectedAsset}
+        onClose={handleModalClose}
+        assetTitle={selectedAsset?.title || ""}
+        folderName={folderName}
+        assetData={selectedAsset || {}}
+      />
     </SafeAreaView>
   );
 }

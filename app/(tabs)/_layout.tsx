@@ -79,7 +79,6 @@ export default function TabLayout() {
 
       {/* ✅ Hide these from tab bar */}
       <Tabs.Screen name="[folderId]" options={{ href: null }} />
-      <Tabs.Screen name="webvr-viewer" options={{ href: null }} />
     </Tabs>
   );
 }

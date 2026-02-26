@@ -1,31 +1,29 @@
-// app/(tabs)/webvr-viewer.tsx
+// components/WebVRViewerModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { createVideoPlayer, VideoView } from "expo-video";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ─── Constants ────────────────────────────────
 const LANGUAGE_ORDER = [
   "english (india)",
   "english (us)",
@@ -45,7 +43,6 @@ const DIFFICULTY_ORDER = ["basic", "intermediate", "advance", "advanced"];
 const norm = (s: string) => (s || "").trim().toLowerCase();
 const ucFirst = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-// ─────────────────────────────────────────────
 interface WebVRViewerModalProps {
   visible: boolean;
   onClose: () => void;
@@ -84,9 +81,41 @@ export function WebVRViewerModal({
   const [selectedDifficulty, setSelectedDiff] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(false); // ← new
 
-  // Animated slide for bottom drawer
   const drawerAnim = useRef(new Animated.Value(0)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current; // ← new
+
+  // ── Header show/hide ──
+  const showHeader = () => {
+    setHeaderVisible(true);
+    Animated.spring(headerAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 80,
+      friction: 12,
+    }).start();
+  };
+
+  const hideHeader = () => {
+    Animated.timing(headerAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setHeaderVisible(false);
+      // Also close drawer when header hides
+      if (menuOpen) closeMenu();
+    });
+  };
+
+  const toggleHeader = () => {
+    if (headerVisible) {
+      hideHeader();
+    } else {
+      showHeader();
+    }
+  };
 
   const openMenu = () => {
     setMenuOpen(true);
@@ -106,30 +135,33 @@ export function WebVRViewerModal({
     }).start(() => setMenuOpen(false));
   };
 
-  // ── Stable player ref — never recreated ──
+  // ── Player: recreate when videoUrl changes ──
+  const videoUrlRef = useRef(videoUrl);
   const playerRef = useRef(
     createVideoPlayer(videoUrl ? { uri: videoUrl } : null),
   );
-  const player = playerRef.current;
 
-  useEffect(() => {
-    if (!videoUrl) return;
-    player.loop = true;
-    player.muted = true;
-    player.play();
-  }, []);
+  if (videoUrl !== videoUrlRef.current) {
+    videoUrlRef.current = videoUrl;
+    try {
+      playerRef.current.release();
+    } catch {}
+    playerRef.current = createVideoPlayer(videoUrl ? { uri: videoUrl } : null);
+  }
+
+  const player = playerRef.current;
 
   useEffect(() => {
     return () => {
       try {
-        player.release();
+        playerRef.current.release();
       } catch {}
     };
   }, []);
 
-  // ── Close handler — orientation FIRST, then close ──
+  // ── Close handler ──
   const isClosing = useRef(false);
-  const handleClose = useCallback(async () => {
+  const handleClose = useCallback(() => {
     if (isClosing.current) return;
     isClosing.current = true;
     try {
@@ -139,12 +171,10 @@ export function WebVRViewerModal({
       player.pause();
     } catch {}
     closeMenu();
-    // Restore portrait BEFORE dismissing modal
-    await ScreenOrientation.lockAsync(
-      ScreenOrientation.OrientationLock.PORTRAIT_UP,
-    );
     onClose();
-    // Reset flag after a tick so it can reopen
+    ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.PORTRAIT_UP,
+    ).catch(() => {});
     setTimeout(() => {
       isClosing.current = false;
     }, 500);
@@ -161,9 +191,13 @@ export function WebVRViewerModal({
       setVideoError(false);
       setIsSwitching(false);
       setMenuOpen(false);
+      setHeaderVisible(false); // ← reset: header hidden on open
       drawerAnim.setValue(0);
+      headerAnim.setValue(0); // ← reset
       if (videoUrl) {
         try {
+          player.loop = true;
+          player.muted = true;
           player.currentTime = 0;
         } catch {}
         player.play();
@@ -173,7 +207,7 @@ export function WebVRViewerModal({
         player.pause();
       } catch {}
     }
-  }, [visible]);
+  }, [visible, videoUrl]);
 
   // ─── Data maps ───────────────────────────────
   const byLanguage = useMemo(() => {
@@ -223,7 +257,6 @@ export function WebVRViewerModal({
     return byLanguage[selectedLanguage]?.[selectedDifficulty] || null;
   }, [byLanguage, selectedLanguage, selectedDifficulty]);
 
-  // ── Auto-select defaults ──
   useEffect(() => {
     if (!languages.length) return;
     setSelectedLang((prev) => {
@@ -282,16 +315,13 @@ export function WebVRViewerModal({
     }
   }, [visible]);
 
-  // ── Video mute sync ──
   useEffect(() => {
     try {
       player.muted = mode === "audio" ? true : isMuted;
     } catch {}
   }, [mode, isMuted]);
 
-  // ── Mode switch — debounced ──
   const switchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleModeChange = useCallback(
     (newMode: "audio" | "video") => {
       if (newMode === mode || isClosing.current) return;
@@ -316,7 +346,6 @@ export function WebVRViewerModal({
     [mode, audioPlayer, player, isMuted],
   );
 
-  // ── Language / difficulty change ──
   const handleLangChange = useCallback(
     (lang: string) => {
       if (lang === selectedLanguage || isClosing.current) return;
@@ -337,7 +366,6 @@ export function WebVRViewerModal({
     [selectedDifficulty],
   );
 
-  // ── Restart video ──
   const handleRestart = useCallback(() => {
     try {
       player.currentTime = 0;
@@ -350,11 +378,17 @@ export function WebVRViewerModal({
     } catch {}
   }, [player, audioPlayer, mode]);
 
-  // Safe area in landscape: left/right insets cover the notch
   const sideInset = Math.max(insets.left, insets.right, 12);
+
   const drawerTranslateY = drawerAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [220, 0],
+  });
+
+  // Header slides down from top
+  const headerTranslateY = headerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-60, 0], // ← slides in from above
   });
 
   return (
@@ -383,55 +417,70 @@ export function WebVRViewerModal({
           </View>
         )}
 
-        {/* ── HEADER (Close + Title + Menu) ── */}
-        <View style={[styles.header, { paddingHorizontal: sideInset }]}>
-          {/* Close — always on top, never blocked */}
-          <TouchableOpacity
-            onPress={handleClose}
-            style={styles.iconBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="close" size={20} color="#fff" />
-          </TouchableOpacity>
+        {/* ── PULL TAB — always visible at top center ── */}
+        <TouchableOpacity
+          onPress={toggleHeader}
+          style={styles.pullTab}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={headerVisible ? "chevron-up" : "chevron-down"}
+            size={14}
+            color="#fff"
+          />
+        </TouchableOpacity>
 
-          <View style={styles.titleBlock}>
-            <Text style={styles.titleText} numberOfLines={1}>
-              {assetTitle}
-            </Text>
-            <Text style={styles.subtitleText} numberOfLines={1}>
-              {folderName}
-            </Text>
-          </View>
-
-          {/* Mute — always visible in header */}
-          <TouchableOpacity
-            onPress={() => setIsMuted((m) => !m)}
-            style={styles.iconBtn}
-            activeOpacity={0.7}
+        {/* ── HEADER — slides in when headerVisible ── */}
+        {headerVisible && (
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                paddingHorizontal: sideInset,
+                transform: [{ translateY: headerTranslateY }],
+              },
+            ]}
           >
-            <Ionicons
-              name={isMuted ? "volume-mute" : "volume-high"}
-              size={18}
-              color="#fff"
-            />
-          </TouchableOpacity>
-
-          {/* ⋯ Menu toggle */}
-          <TouchableOpacity
-            onPress={menuOpen ? closeMenu : openMenu}
-            style={[styles.iconBtn, menuOpen && styles.iconBtnActive]}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="ellipsis-horizontal" size={18} color="#fff" />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={styles.iconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.titleBlock}>
+              <Text style={styles.titleText} numberOfLines={1}>
+                {assetTitle}
+              </Text>
+              <Text style={styles.subtitleText} numberOfLines={1}>
+                {folderName}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setIsMuted((m) => !m)}
+              style={styles.iconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isMuted ? "volume-mute" : "volume-high"}
+                size={18}
+                color="#fff"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={menuOpen ? closeMenu : openMenu}
+              style={[styles.iconBtn, menuOpen && styles.iconBtnActive]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="ellipsis-horizontal" size={18} color="#fff" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         {/* ── BOTTOM DRAWER ── */}
         {menuOpen && (
           <>
-            {/* Backdrop — tap to close */}
             <Pressable style={styles.drawerBackdrop} onPress={closeMenu} />
-
             <Animated.View
               style={[
                 styles.drawer,
@@ -442,8 +491,6 @@ export function WebVRViewerModal({
               ]}
             >
               <View style={styles.drawerHandle} />
-
-              {/* ── Row 1: Back + Restart + Immersive ── */}
               <View style={styles.drawerRow}>
                 <Text style={styles.drawerSectionLabel}>Controls</Text>
                 <View style={styles.drawerRowButtons}>
@@ -454,7 +501,6 @@ export function WebVRViewerModal({
                     <Ionicons name="arrow-back" size={14} color="#fff" />
                     <Text style={styles.actionBtnText}>Back</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
                     onPress={handleRestart}
                     style={styles.actionBtn}
@@ -462,7 +508,6 @@ export function WebVRViewerModal({
                     <Ionicons name="refresh" size={14} color="#fff" />
                     <Text style={styles.actionBtnText}>Restart</Text>
                   </TouchableOpacity>
-
                   {isImmersive && (
                     <TouchableOpacity
                       onPress={() =>
@@ -490,8 +535,6 @@ export function WebVRViewerModal({
                   )}
                 </View>
               </View>
-
-              {/* ── Row 2: Language selector ── */}
               {hasAudio && mode === "audio" && (
                 <>
                   <View style={styles.drawerRow}>
@@ -525,8 +568,6 @@ export function WebVRViewerModal({
                       </View>
                     </ScrollView>
                   </View>
-
-                  {/* ── Row 3: Level selector ── */}
                   <View style={styles.drawerRow}>
                     <Text style={styles.drawerSectionLabel}>Level</Text>
                     <View style={styles.chipRow}>
@@ -559,7 +600,7 @@ export function WebVRViewerModal({
           </>
         )}
 
-        {/* ── Switching overlay — zIndex BELOW header ── */}
+        {/* ── Switching overlay ── */}
         {isSwitching && videoReady && !isClosing.current && (
           <View style={[styles.overlay, { zIndex: 10 }]}>
             <ActivityIndicator size="small" color="#4ECDC4" />
@@ -608,10 +649,8 @@ export function WebVRViewerModal({
   );
 }
 
-// ─── StyleSheet ───────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
-
   noVideo: {
     flex: 1,
     justifyContent: "center",
@@ -625,7 +664,24 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  // Header — zIndex 30 so it's ALWAYS above overlays and drawer
+  // ── Pull tab — always at top center ──
+  pullTab: {
+    position: "absolute",
+    top: 0,
+    alignSelf: "center", // ← won't work on absolute, use left trick below
+    left: "50%", // ← fallback, overridden by marginLeft below
+    zIndex: 40, // above header
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 6,
+    // Center horizontally
+    transform: [{ translateX: -28 }], // half of approx width (56)
+  },
+
+  // Header — slides down from top
   header: {
     position: "absolute",
     top: 0,
@@ -641,7 +697,6 @@ const styles = StyleSheet.create({
   titleBlock: { flex: 1, minWidth: 0 },
   titleText: { fontSize: 13, fontWeight: "700", color: "#fff" },
   subtitleText: { fontSize: 10, color: "rgba(255,255,255,0.6)" },
-
   iconBtn: {
     width: 34,
     height: 34,
@@ -652,11 +707,7 @@ const styles = StyleSheet.create({
   },
   iconBtnActive: { backgroundColor: "rgba(255,255,255,0.25)" },
 
-  // Drawer
-  drawerBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 19,
-  },
+  drawerBackdrop: { ...StyleSheet.absoluteFillObject, zIndex: 19 },
   drawer: {
     position: "absolute",
     bottom: 0,
@@ -678,11 +729,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
     marginBottom: 4,
   },
-  drawerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  drawerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   drawerSectionLabel: {
     fontSize: 10,
     fontWeight: "700",
@@ -692,7 +739,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   drawerRowButtons: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -709,7 +755,6 @@ const styles = StyleSheet.create({
     borderColor: "#E8A2AF",
   },
   actionBtnText: { fontSize: 12, fontWeight: "600", color: "#fff" },
-
   chipRow: { flexDirection: "row", gap: 6 },
   chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   chipActiveTeal: { backgroundColor: "#4ECDC4" },
@@ -719,7 +764,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.15)",
   },
   chipText: { fontSize: 11, fontWeight: "600", color: "#fff" },
-
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
@@ -745,22 +789,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 });
-
-// ─── Page wrapper ─────────────────────────────
-export default function WebVRViewer() {
-  const params = useLocalSearchParams();
-  const router = useRouter();
-  const assetData = useMemo(
-    () => JSON.parse((params.assetData as string) || "{}"),
-    [],
-  );
-  return (
-    <WebVRViewerModal
-      visible={true}
-      onClose={() => router.back()}
-      assetTitle={params.assetTitle as string}
-      folderName={params.folderName as string}
-      assetData={assetData}
-    />
-  );
-}
