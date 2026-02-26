@@ -81,10 +81,11 @@ export function WebVRViewerModal({
   const [selectedDifficulty, setSelectedDiff] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [headerVisible, setHeaderVisible] = useState(false); // ← new
+  const [headerVisible, setHeaderVisible] = useState(false);
 
   const drawerAnim = useRef(new Animated.Value(0)).current;
-  const headerAnim = useRef(new Animated.Value(0)).current; // ← new
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const pendingPlay = useRef(false); // ← audio waiting for video to be ready
 
   // ── Header show/hide ──
   const showHeader = () => {
@@ -104,7 +105,6 @@ export function WebVRViewerModal({
       useNativeDriver: true,
     }).start(() => {
       setHeaderVisible(false);
-      // Also close drawer when header hides
       if (menuOpen) closeMenu();
     });
   };
@@ -151,6 +151,7 @@ export function WebVRViewerModal({
 
   const player = playerRef.current;
 
+  // ── Release on unmount only ──
   useEffect(() => {
     return () => {
       try {
@@ -184,6 +185,7 @@ export function WebVRViewerModal({
   useEffect(() => {
     if (visible) {
       isClosing.current = false;
+      pendingPlay.current = false; // ← reset sync flag
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
       setMode("audio");
       setIsMuted(false);
@@ -191,9 +193,9 @@ export function WebVRViewerModal({
       setVideoError(false);
       setIsSwitching(false);
       setMenuOpen(false);
-      setHeaderVisible(false); // ← reset: header hidden on open
+      setHeaderVisible(false);
       drawerAnim.setValue(0);
-      headerAnim.setValue(0); // ← reset
+      headerAnim.setValue(0);
       if (videoUrl) {
         try {
           player.loop = true;
@@ -257,6 +259,7 @@ export function WebVRViewerModal({
     return byLanguage[selectedLanguage]?.[selectedDifficulty] || null;
   }, [byLanguage, selectedLanguage, selectedDifficulty]);
 
+  // ── Auto-select defaults ──
   useEffect(() => {
     if (!languages.length) return;
     setSelectedLang((prev) => {
@@ -284,6 +287,7 @@ export function WebVRViewerModal({
   );
   const lastAudioUrl = useRef<string | null>(null);
 
+  // ── Audio play — gated on videoReady for sync ──
   useEffect(() => {
     if (!audioPlayer || mode !== "audio" || !selectedAudioObj?.url || !visible)
       return;
@@ -293,13 +297,32 @@ export function WebVRViewerModal({
       try {
         audioPlayer.loop = true;
         audioPlayer.volume = isMuted ? 0 : 1;
-        audioPlayer.play();
+        // ✅ If video is ready (or no video), play immediately
+        // ✅ If video still loading, mark pending and wait
+        if (videoReady || !videoUrl) {
+          audioPlayer.play();
+          pendingPlay.current = false;
+        } else {
+          pendingPlay.current = true; // video will trigger play when ready
+        }
       } catch {}
       setIsSwitching(false);
     }, 80);
     return () => clearTimeout(t);
-  }, [audioPlayer, selectedAudioObj?.url, mode, visible]);
+  }, [audioPlayer, selectedAudioObj?.url, mode, visible, videoReady, videoUrl]);
 
+  // ── Release pending audio play when video becomes ready ──
+  useEffect(() => {
+    if (!videoReady) return;
+    if (pendingPlay.current && audioPlayer && mode === "audio") {
+      pendingPlay.current = false;
+      try {
+        audioPlayer.play();
+      } catch {}
+    }
+  }, [videoReady]);
+
+  // ── Mute sync ──
   useEffect(() => {
     if (!audioPlayer) return;
     try {
@@ -307,20 +330,24 @@ export function WebVRViewerModal({
     } catch {}
   }, [isMuted]);
 
+  // ── Pause audio when modal closes ──
   useEffect(() => {
     if (!visible) {
+      pendingPlay.current = false;
       try {
         audioPlayer?.pause();
       } catch {}
     }
   }, [visible]);
 
+  // ── Video mute sync ──
   useEffect(() => {
     try {
       player.muted = mode === "audio" ? true : isMuted;
     } catch {}
   }, [mode, isMuted]);
 
+  // ── Mode switch — debounced ──
   const switchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleModeChange = useCallback(
     (newMode: "audio" | "video") => {
@@ -385,10 +412,9 @@ export function WebVRViewerModal({
     outputRange: [220, 0],
   });
 
-  // Header slides down from top
   const headerTranslateY = headerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-60, 0], // ← slides in from above
+    outputRange: [-60, 0],
   });
 
   return (
@@ -430,7 +456,7 @@ export function WebVRViewerModal({
           />
         </TouchableOpacity>
 
-        {/* ── HEADER — slides in when headerVisible ── */}
+        {/* ── HEADER — slides down when visible ── */}
         {headerVisible && (
           <Animated.View
             style={[
@@ -664,24 +690,22 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  // ── Pull tab — always at top center ──
+  // ── Pull tab — always visible at top center ──
   pullTab: {
     position: "absolute",
     top: 0,
-    alignSelf: "center", // ← won't work on absolute, use left trick below
-    left: "50%", // ← fallback, overridden by marginLeft below
-    zIndex: 40, // above header
+    left: "50%" as any,
+    transform: [{ translateX: -28 }],
+    zIndex: 40,
     backgroundColor: "rgba(0,0,0,0.55)",
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 6,
-    // Center horizontally
-    transform: [{ translateX: -28 }], // half of approx width (56)
   },
 
-  // Header — slides down from top
+  // ── Header — slides down from top ──
   header: {
     position: "absolute",
     top: 0,
