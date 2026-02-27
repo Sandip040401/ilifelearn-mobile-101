@@ -1,31 +1,29 @@
-// app/(tabs)/webvr-viewer.tsx
+// components/WebVRViewerModal.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { createVideoPlayer, VideoView } from "expo-video";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ─── Constants ────────────────────────────────
 const LANGUAGE_ORDER = [
   "english (india)",
   "english (us)",
@@ -45,7 +43,6 @@ const DIFFICULTY_ORDER = ["basic", "intermediate", "advance", "advanced"];
 const norm = (s: string) => (s || "").trim().toLowerCase();
 const ucFirst = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-// ─────────────────────────────────────────────
 interface WebVRViewerModalProps {
   visible: boolean;
   onClose: () => void;
@@ -79,16 +76,101 @@ export function WebVRViewerModal({
   const [mode, setMode] = useState<"audio" | "video">("audio");
   const [isMuted, setIsMuted] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [canStartPlayback, setCanStartPlayback] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [selectedLanguage, setSelectedLang] = useState("");
   const [selectedDifficulty, setSelectedDiff] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(false);
+  const [videoViewMounted, setVideoViewMounted] = useState(false); // ← track mount
 
-  // Animated slide for bottom drawer
   const drawerAnim = useRef(new Animated.Value(0)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const lastAudioUrl = useRef<string | null>(null);
+  const canStartPlaybackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const isClosing = useRef(false);
 
-  const openMenu = () => {
+  // ── Player: created lazily, only when videoUrl is known ──
+  // Use a ref so it persists across renders without re-creating
+  const playerRef = useRef<ReturnType<typeof createVideoPlayer> | null>(null);
+
+  // Always get/create the player for current videoUrl
+  const getPlayer = useCallback(() => {
+    if (!videoUrl) return null;
+    if (!playerRef.current) {
+      playerRef.current = createVideoPlayer({ uri: videoUrl });
+    }
+    return playerRef.current;
+  }, [videoUrl]);
+
+  // Recreate player when videoUrl changes
+  const lastVideoUrlRef = useRef("");
+  if (videoUrl && videoUrl !== lastVideoUrlRef.current) {
+    lastVideoUrlRef.current = videoUrl;
+    if (playerRef.current) {
+      try {
+        playerRef.current.release();
+      } catch {}
+      playerRef.current = null;
+    }
+    if (videoUrl) {
+      playerRef.current = createVideoPlayer({ uri: videoUrl });
+    }
+  }
+
+  // ── Release on unmount ──
+  useEffect(() => {
+    return () => {
+      if (canStartPlaybackTimerRef.current)
+        clearTimeout(canStartPlaybackTimerRef.current);
+      if (playerRef.current) {
+        try {
+          playerRef.current.release();
+        } catch {}
+        playerRef.current = null;
+      }
+    };
+  }, []);
+
+  // ── Header show/hide ──
+  const showHeader = useCallback(() => {
+    setHeaderVisible(true);
+    Animated.spring(headerAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 80,
+      friction: 12,
+    }).start();
+  }, [headerAnim]);
+
+  const closeMenu = useCallback(() => {
+    Animated.timing(drawerAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setMenuOpen(false));
+  }, [drawerAnim]);
+
+  const hideHeader = useCallback(() => {
+    Animated.timing(headerAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setHeaderVisible(false);
+      closeMenu();
+    });
+  }, [headerAnim, closeMenu]);
+
+  const toggleHeader = useCallback(() => {
+    if (headerVisible) hideHeader();
+    else showHeader();
+  }, [headerVisible, hideHeader, showHeader]);
+
+  const openMenu = useCallback(() => {
     setMenuOpen(true);
     Animated.spring(drawerAnim, {
       toValue: 1,
@@ -96,86 +178,13 @@ export function WebVRViewerModal({
       tension: 80,
       friction: 12,
     }).start();
-  };
+  }, [drawerAnim]);
 
-  const closeMenu = () => {
-    Animated.timing(drawerAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setMenuOpen(false));
-  };
+  // ── expo-audio ──
+  const [selectedLanguage_s, setSelectedLang_s] = useState("");
+  const [selectedDifficulty_s, setSelectedDiff_s] = useState("");
 
-  // ── Stable player ref — never recreated ──
-  const playerRef = useRef(
-    createVideoPlayer(videoUrl ? { uri: videoUrl } : null),
-  );
-  const player = playerRef.current;
-
-  useEffect(() => {
-    if (!videoUrl) return;
-    player.loop = true;
-    player.muted = true;
-    player.play();
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      try {
-        player.release();
-      } catch {}
-    };
-  }, []);
-
-  // ── Close handler — orientation FIRST, then close ──
-  const isClosing = useRef(false);
-  const handleClose = useCallback(async () => {
-    if (isClosing.current) return;
-    isClosing.current = true;
-    try {
-      audioPlayer?.pause();
-    } catch {}
-    try {
-      player.pause();
-    } catch {}
-    closeMenu();
-    // Restore portrait BEFORE dismissing modal
-    await ScreenOrientation.lockAsync(
-      ScreenOrientation.OrientationLock.PORTRAIT_UP,
-    );
-    onClose();
-    // Reset flag after a tick so it can reopen
-    setTimeout(() => {
-      isClosing.current = false;
-    }, 500);
-  }, [onClose, audioPlayer, player]);
-
-  // ── Modal open/close lifecycle ──
-  useEffect(() => {
-    if (visible) {
-      isClosing.current = false;
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-      setMode("audio");
-      setIsMuted(false);
-      setVideoReady(false);
-      setVideoError(false);
-      setIsSwitching(false);
-      setMenuOpen(false);
-      drawerAnim.setValue(0);
-      if (videoUrl) {
-        try {
-          player.currentTime = 0;
-        } catch {}
-        player.play();
-      }
-    } else {
-      try {
-        player.pause();
-      } catch {}
-    }
-  }, [visible]);
-
-  // ─── Data maps ───────────────────────────────
+  // ─── Data maps ───
   const byLanguage = useMemo(() => {
     return audioFiles.reduce((acc: any, a: any) => {
       const lang = norm(a.language || a.keyword);
@@ -243,30 +252,96 @@ export function WebVRViewerModal({
     });
   }, [selectedLanguage, byLanguage]);
 
-  // ── expo-audio ──
   const audioPlayer = useAudioPlayer(
     selectedAudioObj?.url && mode === "audio" && visible
       ? { uri: selectedAudioObj.url }
       : null,
   );
-  const lastAudioUrl = useRef<string | null>(null);
 
+  // ── Modal open/close lifecycle ──
   useEffect(() => {
-    if (!audioPlayer || mode !== "audio" || !selectedAudioObj?.url || !visible)
-      return;
+    if (visible) {
+      isClosing.current = false;
+      if (canStartPlaybackTimerRef.current)
+        clearTimeout(canStartPlaybackTimerRef.current);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      setMode("audio");
+      setIsMuted(false);
+      setVideoReady(false);
+      setCanStartPlayback(false);
+      setVideoError(false);
+      setIsSwitching(false);
+      setMenuOpen(false);
+      setHeaderVisible(false);
+      setVideoViewMounted(false); // ← reset mount flag
+      drawerAnim.setValue(0);
+      headerAnim.setValue(0);
+      lastAudioUrl.current = null;
+      // ⚠️ Do NOT call player.play() here — VideoView isn't mounted yet
+      // Play is triggered by onVideoViewMount effect below
+    } else {
+      if (canStartPlaybackTimerRef.current)
+        clearTimeout(canStartPlaybackTimerRef.current);
+      const p = playerRef.current;
+      if (p) {
+        try {
+          p.pause();
+        } catch {}
+      }
+      try {
+        audioPlayer?.pause();
+      } catch {}
+      lastAudioUrl.current = null;
+    }
+  }, [visible]);
+
+  // ── Start video AFTER VideoView is confirmed mounted ──
+  // This is the fix: wait for videoViewMounted before calling play()
+  useEffect(() => {
+    if (!videoViewMounted || !videoUrl || !visible) return;
+    const p = playerRef.current;
+    if (!p) return;
+    try {
+      p.loop = true;
+      p.muted = true;
+      p.currentTime = 0;
+      p.play();
+    } catch (e) {
+      console.warn("Video play error:", e);
+      setVideoError(true);
+    }
+  }, [videoViewMounted, videoUrl, visible]);
+
+  // ── Audio: fires when canStartPlayback opens (initial load) ──
+  useEffect(() => {
+    if (!canStartPlayback || !visible || mode !== "audio") return;
+    if (!audioPlayer || !selectedAudioObj?.url) return;
     if (lastAudioUrl.current === selectedAudioObj.url) return;
     lastAudioUrl.current = selectedAudioObj.url;
-    const t = setTimeout(() => {
-      try {
-        audioPlayer.loop = true;
-        audioPlayer.volume = isMuted ? 0 : 1;
-        audioPlayer.play();
-      } catch {}
-      setIsSwitching(false);
-    }, 80);
-    return () => clearTimeout(t);
-  }, [audioPlayer, selectedAudioObj?.url, mode, visible]);
+    try {
+      audioPlayer.loop = true;
+      audioPlayer.volume = isMuted ? 0 : 1;
+      audioPlayer.play();
+    } catch {}
+    setIsSwitching(false);
+  }, [canStartPlayback, visible, audioPlayer, selectedAudioObj?.url, mode]);
 
+  // ── Audio: fires when lang/diff changes after already loaded ──
+  useEffect(() => {
+    if (!canStartPlayback || !visible || mode !== "audio") return;
+    if (!audioPlayer || !selectedAudioObj?.url) return;
+    if (lastAudioUrl.current === selectedAudioObj.url) return;
+    lastAudioUrl.current = selectedAudioObj.url;
+    setIsSwitching(true);
+    try {
+      audioPlayer.loop = true;
+      audioPlayer.volume = isMuted ? 0 : 1;
+      audioPlayer.play();
+    } catch {}
+    setTimeout(() => setIsSwitching(false), 150);
+  }, [selectedAudioObj?.url]);
+
+  // ── Mute sync ──
   useEffect(() => {
     if (!audioPlayer) return;
     try {
@@ -274,8 +349,10 @@ export function WebVRViewerModal({
     } catch {}
   }, [isMuted]);
 
+  // ── Pause audio when modal closes ──
   useEffect(() => {
     if (!visible) {
+      lastAudioUrl.current = null;
       try {
         audioPlayer?.pause();
       } catch {}
@@ -284,14 +361,38 @@ export function WebVRViewerModal({
 
   // ── Video mute sync ──
   useEffect(() => {
+    const p = playerRef.current;
+    if (!p) return;
     try {
-      player.muted = mode === "audio" ? true : isMuted;
+      p.muted = mode === "audio" ? true : isMuted;
     } catch {}
   }, [mode, isMuted]);
 
-  // ── Mode switch — debounced ──
-  const switchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── Close handler ──
+  const handleClose = useCallback(() => {
+    if (isClosing.current) return;
+    isClosing.current = true;
+    try {
+      audioPlayer?.pause();
+    } catch {}
+    const p = playerRef.current;
+    if (p) {
+      try {
+        p.pause();
+      } catch {}
+    }
+    closeMenu();
+    onClose();
+    ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.PORTRAIT_UP,
+    ).catch(() => {});
+    setTimeout(() => {
+      isClosing.current = false;
+    }, 500);
+  }, [onClose, audioPlayer, closeMenu]);
 
+  // ── Mode switch ──
+  const switchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleModeChange = useCallback(
     (newMode: "audio" | "video") => {
       if (newMode === mode || isClosing.current) return;
@@ -299,24 +400,31 @@ export function WebVRViewerModal({
       setIsSwitching(true);
       setMode(newMode);
       switchDebounce.current = setTimeout(() => {
+        const p = playerRef.current;
         try {
           if (newMode === "video") {
-            audioPlayer?.pause();
-            player.muted = isMuted;
-            player.currentTime = 0;
-            if (!player.playing) player.play();
+            try {
+              audioPlayer?.pause();
+            } catch {}
+            if (p) {
+              p.muted = isMuted;
+              p.currentTime = 0;
+              if (!p.playing) p.play();
+            }
           } else {
-            player.muted = true;
-            if (!player.playing) player.play();
+            lastAudioUrl.current = null;
+            if (p) {
+              p.muted = true;
+              if (!p.playing) p.play();
+            }
           }
         } catch {}
         setIsSwitching(false);
       }, 150);
     },
-    [mode, audioPlayer, player, isMuted],
+    [mode, audioPlayer, isMuted],
   );
 
-  // ── Language / difficulty change ──
   const handleLangChange = useCallback(
     (lang: string) => {
       if (lang === selectedLanguage || isClosing.current) return;
@@ -337,25 +445,34 @@ export function WebVRViewerModal({
     [selectedDifficulty],
   );
 
-  // ── Restart video ──
   const handleRestart = useCallback(() => {
+    const p = playerRef.current;
     try {
-      player.currentTime = 0;
-      if (!player.playing) player.play();
+      if (p) {
+        p.currentTime = 0;
+        if (!p.playing) p.play();
+      }
       if (mode === "audio" && audioPlayer) {
         lastAudioUrl.current = null;
         audioPlayer.seekTo(0);
         audioPlayer.play();
       }
     } catch {}
-  }, [player, audioPlayer, mode]);
+  }, [audioPlayer, mode]);
 
-  // Safe area in landscape: left/right insets cover the notch
   const sideInset = Math.max(insets.left, insets.right, 12);
+
   const drawerTranslateY = drawerAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [220, 0],
   });
+
+  const headerTranslateY = headerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-60, 0],
+  });
+
+  const player = playerRef.current;
 
   return (
     <Modal
@@ -368,70 +485,96 @@ export function WebVRViewerModal({
       <StatusBar hidden />
       <View style={styles.root}>
         {/* ── VIDEO ── */}
-        {videoUrl ? (
+        {videoUrl && player ? (
           <VideoView
             player={player}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             nativeControls={false}
-            onFirstFrameRender={() => setVideoReady(true)}
+            onLayout={() => {
+              // ← VideoView is now in the DOM/layout tree — safe to call play
+              if (!videoViewMounted) setVideoViewMounted(true);
+            }}
+            onFirstFrameRender={() => {
+              setVideoReady(true);
+              if (canStartPlaybackTimerRef.current)
+                clearTimeout(canStartPlaybackTimerRef.current);
+              canStartPlaybackTimerRef.current = setTimeout(() => {
+                setCanStartPlayback(true);
+              }, 100);
+            }}
           />
-        ) : (
+        ) : !videoUrl ? (
           <View style={styles.noVideo}>
             <Text style={{ fontSize: 48 }}>🌐</Text>
             <Text style={styles.noVideoText}>No video content available</Text>
           </View>
+        ) : null}
+
+        {/* ── PULL TAB ── */}
+        <TouchableOpacity
+          onPress={toggleHeader}
+          style={styles.pullTab}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={headerVisible ? "chevron-up" : "chevron-down"}
+            size={14}
+            color="#fff"
+          />
+        </TouchableOpacity>
+
+        {/* ── HEADER ── */}
+        {headerVisible && (
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                paddingHorizontal: sideInset,
+                transform: [{ translateY: headerTranslateY }],
+              },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={handleClose}
+              style={styles.iconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={20} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.titleBlock}>
+              <Text style={styles.titleText} numberOfLines={1}>
+                {assetTitle}
+              </Text>
+              <Text style={styles.subtitleText} numberOfLines={1}>
+                {folderName}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setIsMuted((m) => !m)}
+              style={styles.iconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isMuted ? "volume-mute" : "volume-high"}
+                size={18}
+                color="#fff"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={menuOpen ? closeMenu : openMenu}
+              style={[styles.iconBtn, menuOpen && styles.iconBtnActive]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="ellipsis-horizontal" size={18} color="#fff" />
+            </TouchableOpacity>
+          </Animated.View>
         )}
-
-        {/* ── HEADER (Close + Title + Menu) ── */}
-        <View style={[styles.header, { paddingHorizontal: sideInset }]}>
-          {/* Close — always on top, never blocked */}
-          <TouchableOpacity
-            onPress={handleClose}
-            style={styles.iconBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="close" size={20} color="#fff" />
-          </TouchableOpacity>
-
-          <View style={styles.titleBlock}>
-            <Text style={styles.titleText} numberOfLines={1}>
-              {assetTitle}
-            </Text>
-            <Text style={styles.subtitleText} numberOfLines={1}>
-              {folderName}
-            </Text>
-          </View>
-
-          {/* Mute — always visible in header */}
-          <TouchableOpacity
-            onPress={() => setIsMuted((m) => !m)}
-            style={styles.iconBtn}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={isMuted ? "volume-mute" : "volume-high"}
-              size={18}
-              color="#fff"
-            />
-          </TouchableOpacity>
-
-          {/* ⋯ Menu toggle */}
-          <TouchableOpacity
-            onPress={menuOpen ? closeMenu : openMenu}
-            style={[styles.iconBtn, menuOpen && styles.iconBtnActive]}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="ellipsis-horizontal" size={18} color="#fff" />
-          </TouchableOpacity>
-        </View>
 
         {/* ── BOTTOM DRAWER ── */}
         {menuOpen && (
           <>
-            {/* Backdrop — tap to close */}
             <Pressable style={styles.drawerBackdrop} onPress={closeMenu} />
-
             <Animated.View
               style={[
                 styles.drawer,
@@ -442,8 +585,6 @@ export function WebVRViewerModal({
               ]}
             >
               <View style={styles.drawerHandle} />
-
-              {/* ── Row 1: Back + Restart + Immersive ── */}
               <View style={styles.drawerRow}>
                 <Text style={styles.drawerSectionLabel}>Controls</Text>
                 <View style={styles.drawerRowButtons}>
@@ -454,7 +595,6 @@ export function WebVRViewerModal({
                     <Ionicons name="arrow-back" size={14} color="#fff" />
                     <Text style={styles.actionBtnText}>Back</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
                     onPress={handleRestart}
                     style={styles.actionBtn}
@@ -462,7 +602,6 @@ export function WebVRViewerModal({
                     <Ionicons name="refresh" size={14} color="#fff" />
                     <Text style={styles.actionBtnText}>Restart</Text>
                   </TouchableOpacity>
-
                   {isImmersive && (
                     <TouchableOpacity
                       onPress={() =>
@@ -490,8 +629,6 @@ export function WebVRViewerModal({
                   )}
                 </View>
               </View>
-
-              {/* ── Row 2: Language selector ── */}
               {hasAudio && mode === "audio" && (
                 <>
                   <View style={styles.drawerRow}>
@@ -525,8 +662,6 @@ export function WebVRViewerModal({
                       </View>
                     </ScrollView>
                   </View>
-
-                  {/* ── Row 3: Level selector ── */}
                   <View style={styles.drawerRow}>
                     <Text style={styles.drawerSectionLabel}>Level</Text>
                     <View style={styles.chipRow}>
@@ -559,7 +694,7 @@ export function WebVRViewerModal({
           </>
         )}
 
-        {/* ── Switching overlay — zIndex BELOW header ── */}
+        {/* ── Switching overlay ── */}
         {isSwitching && videoReady && !isClosing.current && (
           <View style={[styles.overlay, { zIndex: 10 }]}>
             <ActivityIndicator size="small" color="#4ECDC4" />
@@ -568,7 +703,7 @@ export function WebVRViewerModal({
         )}
 
         {/* ── Loading overlay ── */}
-        {!videoReady && !videoError && videoUrl && (
+        {!canStartPlayback && !videoError && videoUrl && (
           <View style={[styles.overlay, { zIndex: 10 }]}>
             <ActivityIndicator size="large" color="#4ECDC4" />
             <Text style={styles.overlayText}>Loading WebVR Experience...</Text>
@@ -596,6 +731,19 @@ export function WebVRViewerModal({
               onPress={() => {
                 setVideoError(false);
                 setVideoReady(false);
+                setCanStartPlayback(false);
+                setVideoViewMounted(false);
+                // Recreate the player for retry
+                if (playerRef.current) {
+                  try {
+                    playerRef.current.release();
+                  } catch {}
+                  playerRef.current = null;
+                }
+                if (videoUrl) {
+                  playerRef.current = createVideoPlayer({ uri: videoUrl });
+                  setVideoViewMounted(true); // re-trigger mount effect
+                }
               }}
               style={styles.retryBtn}
             >
@@ -608,10 +756,8 @@ export function WebVRViewerModal({
   );
 }
 
-// ─── StyleSheet ───────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#000" },
-
   noVideo: {
     flex: 1,
     justifyContent: "center",
@@ -624,8 +770,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginTop: 12,
   },
-
-  // Header — zIndex 30 so it's ALWAYS above overlays and drawer
+  pullTab: {
+    position: "absolute",
+    top: 0,
+    left: "50%" as any,
+    transform: [{ translateX: -28 }],
+    zIndex: 40,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 6,
+  },
   header: {
     position: "absolute",
     top: 0,
@@ -641,7 +798,6 @@ const styles = StyleSheet.create({
   titleBlock: { flex: 1, minWidth: 0 },
   titleText: { fontSize: 13, fontWeight: "700", color: "#fff" },
   subtitleText: { fontSize: 10, color: "rgba(255,255,255,0.6)" },
-
   iconBtn: {
     width: 34,
     height: 34,
@@ -651,12 +807,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconBtnActive: { backgroundColor: "rgba(255,255,255,0.25)" },
-
-  // Drawer
-  drawerBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 19,
-  },
+  drawerBackdrop: { ...StyleSheet.absoluteFillObject, zIndex: 19 },
   drawer: {
     position: "absolute",
     bottom: 0,
@@ -678,11 +829,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
     marginBottom: 4,
   },
-  drawerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  drawerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   drawerSectionLabel: {
     fontSize: 10,
     fontWeight: "700",
@@ -692,7 +839,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   drawerRowButtons: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -709,7 +855,6 @@ const styles = StyleSheet.create({
     borderColor: "#E8A2AF",
   },
   actionBtnText: { fontSize: 12, fontWeight: "600", color: "#fff" },
-
   chipRow: { flexDirection: "row", gap: 6 },
   chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   chipActiveTeal: { backgroundColor: "#4ECDC4" },
@@ -719,7 +864,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.15)",
   },
   chipText: { fontSize: 11, fontWeight: "600", color: "#fff" },
-
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
@@ -745,22 +889,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 });
-
-// ─── Page wrapper ─────────────────────────────
-export default function WebVRViewer() {
-  const params = useLocalSearchParams();
-  const router = useRouter();
-  const assetData = useMemo(
-    () => JSON.parse((params.assetData as string) || "{}"),
-    [],
-  );
-  return (
-    <WebVRViewerModal
-      visible={true}
-      onClose={() => router.back()}
-      assetTitle={params.assetTitle as string}
-      folderName={params.folderName as string}
-      assetData={assetData}
-    />
-  );
-}
