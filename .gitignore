@@ -41,4 +41,12 @@ app-example
 
 # generated native folders
 /ios
-/android
+# Native android source tracking (ignoring heavy build/cache files)
+android/.gradle/
+android/build/
+android/.idea/
+android/.kotlin/
+android/*.txt
+android/*.log
+ModelAnimation.java
+RenderableInstance.java
