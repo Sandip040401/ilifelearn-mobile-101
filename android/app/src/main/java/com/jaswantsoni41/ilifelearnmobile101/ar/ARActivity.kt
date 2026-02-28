@@ -214,11 +214,15 @@ class ARActivity : AppCompatActivity() {
                         Light.builder(Light.Type.DIRECTIONAL)
                                 .setIntensity(100000f)
                                 .setColor(SfColor(1.0f, 1.0f, 1.0f))
+                                .setShadowCastingEnabled(false)
                                 .build()
                 val sunNode = Node()
                 sunNode.light = sun
                 sunNode.setParent(scene)
                 sunNode.localRotation = Quaternion.axisAngle(Vector3(1.0f, 1.0f, 0.0f), -45f)
+
+                // Disable shadow receiving on the floor right from the start
+                arFragment.arSceneView.planeRenderer.isShadowReceiver = false
 
                 // 2. Add Ambient Fill Lights to match Three.js
                 // Top Light
@@ -853,6 +857,9 @@ class ARActivity : AppCompatActivity() {
     }
 
     private fun placeModel(hitResult: com.google.ar.core.HitResult, renderable: ModelRenderable) {
+        // Hide AR surface scanning dots once placed for a cleaner view
+        arFragment.arSceneView.planeRenderer.setVisible(false)
+
         val anchorNode =
                 AnchorNode(hitResult.createAnchor()).apply {
                     setParent(arFragment.arSceneView.scene)
@@ -862,6 +869,28 @@ class ARActivity : AppCompatActivity() {
                     this.renderable = renderable
                     this.setParent(anchorNode)
                     this.select()
+
+                    // Calculate the model's actual physical dimension
+                    val collisionShape =
+                            renderable.collisionShape as? com.google.ar.sceneform.collision.Box
+                    val size = collisionShape?.size ?: Vector3(1f, 1f, 1f)
+                    val maxDimension = maxOf(size.x, maxOf(size.y, size.z)).coerceAtLeast(0.01f)
+
+                    // Cap the maximum scale so the model physically never gets larger than ~1.5
+                    // meters in the real world
+                    // This creates a natural "screen size" limit without breaking AR coordinate
+                    // depth
+                    val dynamicMaxScale = (1.5f / maxDimension).coerceIn(1.0f, 10.0f)
+
+                    // Relax the pinch-to-zoom limits to allow much smaller/larger zooming
+                    this.getScaleController()?.setMinScale(0.25f)
+                    this.getScaleController()?.setMaxScale(dynamicMaxScale)
+                    // Lower the sensitivity to make the zooming feel more natural (less jumpy)
+                    this.getScaleController()?.setSensitivity(0.1f)
+                    // Disable elasticity so it stops scaling immediately at the limit instead of
+                    // "bouncing" through 0.0 scale and flipping
+                    this.getScaleController()?.setElasticity(0.0f)
+
                     this.localScale = Vector3(0.3f, 0.3f, 0.3f)
                     this.localRotation = Quaternion.identity()
                 }

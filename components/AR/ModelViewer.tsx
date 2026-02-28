@@ -6,9 +6,13 @@ import {
 } from '@/services/arService';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import Constants, { AppOwnership } from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const isExpoGo = Constants.appOwnership === AppOwnership.Expo;
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -347,7 +351,14 @@ export default function ModelViewer({
 
     const launchARWithUrl = async (url: string) => {
         if (Platform.OS === 'android') {
-            openNativeAR(url, model.name, availableAudios, animations);
+            if (isExpoGo) {
+                const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(url)}&mode=ar_preferred&title=${encodeURIComponent(model?.name || '3D Model')}`;
+                Linking.openURL(`intent://arvr.google.com/scene-viewer/1.2?mode=ar_preferred&file=${encodeURIComponent(url)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;`).catch(() => {
+                    Linking.openURL(sceneViewerUrl);
+                });
+            } else {
+                openNativeAR(url, model.name, availableAudios, animations);
+            }
         } else {
             // iOS - use USDZ Quick Look if available, or model-viewer's AR
             const quickLookUrl = url;
@@ -368,10 +379,30 @@ export default function ModelViewer({
 
             if (Platform.OS === 'android') {
                 setIsExporting(false);
-                // tempPath from FileSystem.cacheDirectory already includes "file://"
-                // e.g. "file:///data/user/0/.../cache/custom_model.glb"
-                // Do NOT prepend "file://" again — it would produce a broken URI.
-                openNativeAR(tempPath, model.name, availableAudios, animations);
+                if (isExpoGo) {
+                    const contentUri = await FileSystem.getContentUriAsync(tempPath);
+                    const IntentLauncher = require('expo-intent-launcher');
+                    try {
+                        // Start Google Scene Viewer and wait for it to finish
+                        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+                            data: contentUri,
+                            packageName: 'com.google.android.googlequicksearchbox',
+                            flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+                        });
+                    } catch {
+                        // Fallback to generic 3D view if Scene Viewer isn't installed
+                        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+                            data: contentUri,
+                            type: 'model/gltf-binary',
+                            flags: 1,
+                        });
+                    }
+                    // Cleanup after the user exits AR mode
+                    await FileSystem.deleteAsync(tempPath, { idempotent: true });
+                } else {
+                    // tempPath from FileSystem.cacheDirectory already includes "file://"
+                    openNativeAR(tempPath, model.name, availableAudios, animations);
+                }
             } else {
                 setIsExporting(false);
                 Linking.openURL(tempPath).catch(() => console.warn('QuickLook failed'));
