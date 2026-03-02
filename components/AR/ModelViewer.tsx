@@ -6,15 +6,20 @@ import {
 } from '@/services/arService';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import Constants, { AppOwnership } from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Image } from 'expo-image';
-import * as IntentLauncher from 'expo-intent-launcher';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const isExpoGo = Constants.appOwnership === AppOwnership.Expo;
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
     Linking,
+    NativeEventEmitter,
+    NativeModules,
     Platform,
     Image as RNImage,
     ScrollView,
@@ -25,15 +30,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WebView from 'react-native-webview';
+import { openNativeAR } from './nativeAR';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const TARGET_ASSETS: Record<string, any> = {
-    'Bear': require('../../assets/targets/Bear.jpeg'),
-    'Dog': require('../../assets/targets/Dog.jpg'),
-    'Dolphin': require('../../assets/targets/Dolphin.jpg'),
-    'Elephant': require('../../assets/targets/Elephant.jpg'),
-    'Wolf': require('../../assets/targets/Wolf.jpg'),
+    'Bear': 'https://i.ibb.co/HfV3WzxQ/Bear.jpg',
+    'Dog': 'https://i.ibb.co/1fM6PTmP/Dog.jpg',
+    'Dolphin': 'https://i.ibb.co/cStPr4fY/Dolphin.jpg',
+    'Elephant': 'https://i.ibb.co/p6WG1hLc/Elephant.jpg',
+    'Wolf': 'https://i.ibb.co/35LpnYGX/Wolf.jpg',
 };
 
 // Language & difficulty ordering
@@ -139,6 +145,8 @@ export default function ModelViewer({
     const [showTargetPainter, setShowTargetPainter] = useState(false);
     const [animations, setAnimations] = useState<string[]>([]);
     const [selectedAnimation, setSelectedAnimation] = useState<string | null>(null);
+    // Index-keyed native AR animation (Android only)
+    const [selectedAnimationIndex, setSelectedAnimationIndex] = useState(0);
 
     const [isExporting, setIsExporting] = useState(false);
     const [exportStatusText, setExportStatusText] = useState('');
@@ -173,6 +181,24 @@ export default function ModelViewer({
     useEffect(() => {
         audioPlayer.volume = volume / 100;
     }, [volume]);
+
+    // ── Native AR animation bridge (Android) ────────────────────────────────
+    // The Kotlin ARActivity emits "onARAnimations" with the list of animation
+    // names as soon as a model is placed in AR.
+    useEffect(() => {
+        if (Platform.OS !== 'android') return;
+        const arModule = NativeModules.ARNativeModule;
+        if (!arModule) return;
+        const emitter = new NativeEventEmitter(arModule);
+        const sub = emitter.addListener('onARAnimations', (list: string[]) => {
+            setAnimations(list);
+            if (list.length > 0) {
+                setSelectedAnimation(list[0]);
+                setSelectedAnimationIndex(0);
+            }
+        });
+        return () => sub.remove();
+    }, []);
 
     const modelId = model?.id || model?._id || '';
     const modelFileUrl = getModelFileUrl(modelId);
@@ -325,10 +351,14 @@ export default function ModelViewer({
 
     const launchARWithUrl = async (url: string) => {
         if (Platform.OS === 'android') {
-            const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(url)}&mode=ar_preferred&title=${encodeURIComponent(model?.name || '3D Model')}`;
-            Linking.openURL(`intent://arvr.google.com/scene-viewer/1.2?mode=ar_preferred&file=${encodeURIComponent(url)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;`).catch(() => {
-                Linking.openURL(sceneViewerUrl);
-            });
+            if (isExpoGo) {
+                const sceneViewerUrl = `https://arvr.google.com/scene-viewer/1.2?file=${encodeURIComponent(url)}&mode=ar_preferred&title=${encodeURIComponent(model?.name || '3D Model')}`;
+                Linking.openURL(`intent://arvr.google.com/scene-viewer/1.2?mode=ar_preferred&file=${encodeURIComponent(url)}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;end;`).catch(() => {
+                    Linking.openURL(sceneViewerUrl);
+                });
+            } else {
+                openNativeAR(url, model.name, availableAudios, animations);
+            }
         } else {
             // iOS - use USDZ Quick Look if available, or model-viewer's AR
             const quickLookUrl = url;
@@ -348,27 +378,31 @@ export default function ModelViewer({
             await FileSystem.writeAsStringAsync(tempPath, base64, { encoding: FileSystem.EncodingType.Base64 });
 
             if (Platform.OS === 'android') {
-                const contentUri = await FileSystem.getContentUriAsync(tempPath);
                 setIsExporting(false);
-
-                try {
-                    // Start Google Scene Viewer and wait for it to finish
-                    await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-                        data: contentUri,
-                        packageName: 'com.google.android.googlequicksearchbox',
-                        flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
-                    });
-                } catch {
-                    // Fallback to generic 3D view if Scene Viewer isn't installed
-                    await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-                        data: contentUri,
-                        type: 'model/gltf-binary',
-                        flags: 1,
-                    });
+                if (isExpoGo) {
+                    const contentUri = await FileSystem.getContentUriAsync(tempPath);
+                    const IntentLauncher = require('expo-intent-launcher');
+                    try {
+                        // Start Google Scene Viewer and wait for it to finish
+                        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+                            data: contentUri,
+                            packageName: 'com.google.android.googlequicksearchbox',
+                            flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+                        });
+                    } catch {
+                        // Fallback to generic 3D view if Scene Viewer isn't installed
+                        await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+                            data: contentUri,
+                            type: 'model/gltf-binary',
+                            flags: 1,
+                        });
+                    }
+                    // Cleanup after the user exits AR mode
+                    await FileSystem.deleteAsync(tempPath, { idempotent: true });
+                } else {
+                    // tempPath from FileSystem.cacheDirectory already includes "file://"
+                    openNativeAR(tempPath, model.name, availableAudios, animations);
                 }
-
-                // Cleanup after the user exits AR mode
-                await FileSystem.deleteAsync(tempPath, { idempotent: true });
             } else {
                 setIsExporting(false);
                 Linking.openURL(tempPath).catch(() => console.warn('QuickLook failed'));
@@ -746,11 +780,49 @@ export default function ModelViewer({
             if (data.type === 'exportGLB') {
                 if (!loadedModel) return;
                 postMsg({ type: 'exportStatus', status: 'Exporting 3D scene... (this may take a moment)' });
+
+                // ── Flush textures and FIX UVs for AR before export ───────────
+                // AR Viewers (like Android Sceneform) often ignore TEXCOORD_1 for base color.
+                // The Target Sheet uses uv1 (channel 1). We must temporarily swap uv and uv1
+                // and set the channel back to 0 so the exported GLB uses TEXCOORD_0 for the paint.
+                const restoreStates = [];
+
+                loadedModel.traverse(c => {
+                    if (c.isMesh && c.material && c.material.map) {
+                        c.material.map.needsUpdate = true;
+                        if (c.material.map.channel === 1 && c.geometry && c.geometry.attributes.uv1) {
+                            // Store original state
+                            restoreStates.push({
+                                mat: c.material,
+                                map: c.material.map,
+                                origUv: c.geometry.attributes.uv,
+                                geom: c.geometry
+                            });
+                            // Swap UV channels for export
+                            c.geometry.setAttribute('uv', c.geometry.attributes.uv1);
+                            c.material.map.channel = 0;
+                        }
+                    }
+                });
+
+                // Force one extra render so the flushed texture is GPU-resident
+                renderer.render(scene, camera);
+
                 const exporter = new GLTFExporter();
-                const exportAnims = window._currentAnimation ? [window._currentAnimation] : (window._gltfAnimations || []);
+                // Export ALL original animations to ensure Sceneform's bone mapping doesn't detach or fail
+                const exportAnims = window._gltfAnimations || [];
+
+                const cleanupAndRestore = () => {
+                    restoreStates.forEach(s => {
+                        s.geom.setAttribute('uv', s.origUv);
+                        s.map.channel = 1;
+                    });
+                };
+
                 exporter.parse(
                     loadedModel,
                     async function(gltf) {
+                        cleanupAndRestore();
                         postMsg({ type: 'exportStatus', status: 'Converting file format...' });
                         try {
                             const base64 = await arrayBufferToBase64(gltf);
@@ -760,11 +832,13 @@ export default function ModelViewer({
                         }
                     },
                     function(error) {
+                        cleanupAndRestore();
                         postMsg({ type: 'error', message: 'Export failed: ' + error });
                     },
-                    { binary: true, animations: exportAnims } // Include isolated selected animation
+                    { binary: true, animations: exportAnims }
                 );
             }
+
         } catch (e) {}
     }
     window.addEventListener('message', handleMessage);
@@ -802,6 +876,10 @@ export default function ModelViewer({
             if (foundKey) asset = TARGET_ASSETS[foundKey];
         }
         if (!asset) asset = Object.values(TARGET_ASSETS)[0];
+
+        if (typeof asset === 'string') {
+            return asset;
+        }
 
         const assetSource = RNImage.resolveAssetSource(asset);
         return assetSource?.uri || '';
@@ -846,14 +924,18 @@ export default function ModelViewer({
 
     var img = new Image();
     var canUseMask = true;
+    function log(m) { console.log(m); postMsg({ type: 'log', message: m }); }
+
     function setupImageHandlers() {
         img.onload = function() {
+            log('Image downloaded, processing...');
             var maxW = window.innerWidth - 16;
             var maxH = window.innerHeight - 16;
             var sc = Math.min(1, maxW / img.width, maxH / img.height);
             var w = Math.floor(img.width * sc);
             var h = Math.floor(img.height * sc);
             if(w <= 0 || h <= 0) return;
+            
             bgCanvas.width = w; bgCanvas.height = h;
             drawCanvas.width = w; drawCanvas.height = h;
             maskCanvas.width = w; maskCanvas.height = h;
@@ -861,6 +943,7 @@ export default function ModelViewer({
             wrapper.style.height = h + 'px';
             bgCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
             
+            log('Generating coloring mask...');
             try {
                 var mCtx = maskCanvas.getContext('2d');
                 mCtx.drawImage(img, 0, 0, w, h);
@@ -874,7 +957,7 @@ export default function ModelViewer({
                 }
                 mCtx.putImageData(id, 0, 0);
             } catch (e) {
-                console.warn("Mask generation failed:", e);
+                log('Mask failed (CORS), switching to free-draw');
                 canUseMask = false;
             }
             
@@ -884,28 +967,43 @@ export default function ModelViewer({
     }
 
     function tryLoadImage() {
-        var tUrl = ${JSON.stringify(targetUrl)};
-        if (!tUrl) {
-            loadingEl.textContent = 'Target image not found locally';
+        var baseUri = ${JSON.stringify(targetUrl)};
+        if (!baseUri) {
+            loadingEl.textContent = 'Error: No URL provided';
             return;
         }
+
         setupImageHandlers();
+
+        // Use a cache-buster for the coloring sheet to avoid "stuck" cache states
+        var tUrl = baseUri.includes('?') ? (baseUri + '&v=' + Date.now()) : (baseUri + '?v=' + Date.now());
+        
+        log('Starting load: ' + baseUri);
+        loadingEl.textContent = 'Connecting...';
+
         img.crossOrigin = 'anonymous';
         img.onerror = function() {
             if (img.crossOrigin) {
-                console.log('Retrying without crossOrigin');
+                log('CORS block, retrying simple load...');
                 img.crossOrigin = null;
                 img.src = tUrl;
             } else {
-                loadingEl.textContent = 'Failed to load local image';
-                postMsg({ type: 'error', message: 'Failed to load target Url: ' + tUrl });
+                loadingEl.textContent = 'Connection failed';
+                postMsg({ type: 'error', message: 'Failed to load: ' + baseUri });
             }
         };
+
         img.src = tUrl;
+        
+        // Safety: Check if it finished before listener attached
+        if (img.complete && img.naturalWidth > 0) {
+            log('Image found in cache');
+            img.onload();
+        }
     }
     
-    // Start loading target
-    tryLoadImage();
+    // Start with a small delay to ensure DOM is fully baked
+    setTimeout(tryLoadImage, 50);
 
     function inMask(x, y) {
         if (!canUseMask) return true;
@@ -1420,10 +1518,23 @@ export default function ModelViewer({
                                 {animations.length > 0 && (
                                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
                                         {animations.map((anim, idx) => (
-                                            <TouchableOpacity key={anim + idx} onPress={() => { setSelectedAnimation(anim); sendToWebView({ type: 'setAnimation', value: anim }); }} style={{
-                                                paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginRight: 6,
-                                                backgroundColor: selectedAnimation === anim ? '#DA70D6' : 'rgba(255,255,255,0.08)',
-                                            }}>
+                                            <TouchableOpacity
+                                                key={anim + idx}
+                                                onPress={() => {
+                                                    setSelectedAnimation(anim);
+                                                    setSelectedAnimationIndex(idx);
+                                                    // WebView 3D viewer (in-app)
+                                                    sendToWebView({ type: 'setAnimation', value: anim });
+                                                    // Native AR session (Android Sceneform)
+                                                    if (Platform.OS === 'android' && NativeModules.ARNativeModule) {
+                                                        NativeModules.ARNativeModule.setAnimation(idx);
+                                                    }
+                                                }}
+                                                style={{
+                                                    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginRight: 6,
+                                                    backgroundColor: selectedAnimation === anim ? '#DA70D6' : 'rgba(255,255,255,0.08)',
+                                                }}
+                                            >
                                                 <Text style={{ fontSize: 11, fontWeight: selectedAnimation === anim ? '700' : '400', color: '#fff', textTransform: 'capitalize' }}>{anim}</Text>
                                             </TouchableOpacity>
                                         ))}
@@ -1634,6 +1745,8 @@ export default function ModelViewer({
                                             sendToWebView({ type: 'applyTargetTexture', dataUrl: data.dataUrl });
                                             setTextureDisplayMode('target-paint');
                                             setShowTargetPainter(false);
+                                        } else if (data.type === 'log') {
+                                            console.log("[SheetWebView]", data.message);
                                         } else if (data.type === 'error') {
                                             console.warn("Coloring sheet error:", data.message);
                                             // Fallback: If export fails, close painter anyway to unblock user
