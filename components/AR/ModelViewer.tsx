@@ -35,11 +35,11 @@ import { openNativeAR } from './nativeAR';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const TARGET_ASSETS: Record<string, any> = {
-    'Bear': require('../../assets/targets/Bear.jpeg'),
-    'Dog': require('../../assets/targets/Dog.jpg'),
-    'Dolphin': require('../../assets/targets/Dolphin.jpg'),
-    'Elephant': require('../../assets/targets/Elephant.jpg'),
-    'Wolf': require('../../assets/targets/Wolf.jpg'),
+    'Bear': 'https://i.ibb.co/HfV3WzxQ/Bear.jpg',
+    'Dog': 'https://i.ibb.co/1fM6PTmP/Dog.jpg',
+    'Dolphin': 'https://i.ibb.co/cStPr4fY/Dolphin.jpg',
+    'Elephant': 'https://i.ibb.co/p6WG1hLc/Elephant.jpg',
+    'Wolf': 'https://i.ibb.co/35LpnYGX/Wolf.jpg',
 };
 
 // Language & difficulty ordering
@@ -877,6 +877,10 @@ export default function ModelViewer({
         }
         if (!asset) asset = Object.values(TARGET_ASSETS)[0];
 
+        if (typeof asset === 'string') {
+            return asset;
+        }
+
         const assetSource = RNImage.resolveAssetSource(asset);
         return assetSource?.uri || '';
     }, [model?.name]);
@@ -920,14 +924,18 @@ export default function ModelViewer({
 
     var img = new Image();
     var canUseMask = true;
+    function log(m) { console.log(m); postMsg({ type: 'log', message: m }); }
+
     function setupImageHandlers() {
         img.onload = function() {
+            log('Image downloaded, processing...');
             var maxW = window.innerWidth - 16;
             var maxH = window.innerHeight - 16;
             var sc = Math.min(1, maxW / img.width, maxH / img.height);
             var w = Math.floor(img.width * sc);
             var h = Math.floor(img.height * sc);
             if(w <= 0 || h <= 0) return;
+            
             bgCanvas.width = w; bgCanvas.height = h;
             drawCanvas.width = w; drawCanvas.height = h;
             maskCanvas.width = w; maskCanvas.height = h;
@@ -935,6 +943,7 @@ export default function ModelViewer({
             wrapper.style.height = h + 'px';
             bgCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
             
+            log('Generating coloring mask...');
             try {
                 var mCtx = maskCanvas.getContext('2d');
                 mCtx.drawImage(img, 0, 0, w, h);
@@ -948,7 +957,7 @@ export default function ModelViewer({
                 }
                 mCtx.putImageData(id, 0, 0);
             } catch (e) {
-                console.warn("Mask generation failed:", e);
+                log('Mask failed (CORS), switching to free-draw');
                 canUseMask = false;
             }
             
@@ -958,28 +967,43 @@ export default function ModelViewer({
     }
 
     function tryLoadImage() {
-        var tUrl = ${JSON.stringify(targetUrl)};
-        if (!tUrl) {
-            loadingEl.textContent = 'Target image not found locally';
+        var baseUri = ${JSON.stringify(targetUrl)};
+        if (!baseUri) {
+            loadingEl.textContent = 'Error: No URL provided';
             return;
         }
+
         setupImageHandlers();
+
+        // Use a cache-buster for the coloring sheet to avoid "stuck" cache states
+        var tUrl = baseUri.includes('?') ? (baseUri + '&v=' + Date.now()) : (baseUri + '?v=' + Date.now());
+        
+        log('Starting load: ' + baseUri);
+        loadingEl.textContent = 'Connecting...';
+
         img.crossOrigin = 'anonymous';
         img.onerror = function() {
             if (img.crossOrigin) {
-                console.log('Retrying without crossOrigin');
+                log('CORS block, retrying simple load...');
                 img.crossOrigin = null;
                 img.src = tUrl;
             } else {
-                loadingEl.textContent = 'Failed to load local image';
-                postMsg({ type: 'error', message: 'Failed to load target Url: ' + tUrl });
+                loadingEl.textContent = 'Connection failed';
+                postMsg({ type: 'error', message: 'Failed to load: ' + baseUri });
             }
         };
+
         img.src = tUrl;
+        
+        // Safety: Check if it finished before listener attached
+        if (img.complete && img.naturalWidth > 0) {
+            log('Image found in cache');
+            img.onload();
+        }
     }
     
-    // Start loading target
-    tryLoadImage();
+    // Start with a small delay to ensure DOM is fully baked
+    setTimeout(tryLoadImage, 50);
 
     function inMask(x, y) {
         if (!canUseMask) return true;
@@ -1721,6 +1745,8 @@ export default function ModelViewer({
                                             sendToWebView({ type: 'applyTargetTexture', dataUrl: data.dataUrl });
                                             setTextureDisplayMode('target-paint');
                                             setShowTargetPainter(false);
+                                        } else if (data.type === 'log') {
+                                            console.log("[SheetWebView]", data.message);
                                         } else if (data.type === 'error') {
                                             console.warn("Coloring sheet error:", data.message);
                                             // Fallback: If export fails, close painter anyway to unblock user
